@@ -10,7 +10,14 @@ import requests
 
 # DeepSeek API endpoint (OpenAI-compatible)
 DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
+
+# Load API key from env or local config file
 DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+if not DEEPSEEK_KEY:
+    cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "ds_key.txt")
+    if os.path.exists(cfg_path):
+        with open(cfg_path) as f:
+            DEEPSEEK_KEY = f.read().strip()
 
 SYSTEM_PROMPT = """You are a warm, human-like music companion chatting with the user while they listen to music.
 

@@ -5,6 +5,10 @@ data/history.json
 data/ncm_cookie.json
 data/_qr.png
 data/_playing.mp3*
+data/ds_key.txt
+data/qq_seed_*.json
+data/qq_unmatched_*.json
+data/qq_raw_*.txt
 data/covers/
 __pycache__/
 *.pyc

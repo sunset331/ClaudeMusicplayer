@@ -332,6 +332,140 @@ def _norm(name):
 
 
 # ============================================================
+# CANDIDATE POOL
+# ============================================================
+
+CANDIDATE_DIR = os.path.join(DATA_DIR, "candidates")
+
+
+def _candidate_path(mode):
+    os.makedirs(CANDIDATE_DIR, exist_ok=True)
+    return os.path.join(CANDIDATE_DIR, f"{mode}.json")
+
+
+def load_candidates(mode):
+    """Load cached candidate pool for mode."""
+    path = _candidate_path(mode)
+    if not os.path.exists(path):
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_candidates(candidates, mode):
+    """Save candidate pool to disk."""
+    data = {
+        "mode": mode,
+        "built_at": datetime.now().isoformat(),
+        "count": len(candidates),
+        "songs": candidates,
+    }
+    with open(_candidate_path(mode), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def build_candidates(mode="rap"):
+    """
+    Build candidate pool for a mode. Returns list of song dicts with _sources.
+    Does NOT score — scoring is separate via score_candidates().
+    """
+    taste = load_taste()
+    history = load_history()
+    mode_taste = get_mode_taste(taste, mode)
+
+    known_ids = set()
+    known_ids |= set(str(x) for x in history.get("recommended_ids", []))
+
+    candidates = {}
+    seen_names = set()
+
+    def add(iterable, source):
+        for s in iterable:
+            sid = str(s.get("songid", ""))
+            name = s.get("songname", "")
+            name_norm = _norm(name)
+            if sid and sid in known_ids:
+                continue
+            if sid and sid in candidates:
+                candidates[sid]["_sources"].append(source)
+                continue
+            if name_norm in seen_names:
+                continue
+            if sid:
+                s["_sources"] = [source]
+                s["_score"] = 0
+                s["_played"] = False
+                s["_from_simi"] = False
+                candidates[sid] = s
+                seen_names.add(name_norm)
+
+    top_artists = mode_taste.get("top_artists", [])
+    use_top = top_artists[:20] if top_artists else []
+
+    # Source 1: Top seed artists
+    if use_top:
+        print(f"  [build {mode}] Searching {len(use_top)} top artists...")
+        for artist in use_top:
+            results = search_songs(artist, limit=25)
+            add(results, f"artist:{artist}")
+            time.sleep(0.3)
+
+    # Source 2: Similar artists via NetEase
+    similar_artists = set()
+    for artist in use_top[:8]:
+        aid = _find_artist_id(artist)
+        if aid:
+            data = ncm_get("/simi/artist", {"id": aid})
+            if data and data.get("code") == 200:
+                for a in data.get("artists", [])[:3]:
+                    similar_artists.add(a.get("name", ""))
+            time.sleep(0.2)
+    print(f"  [build {mode}] Searching {min(len(similar_artists), 16)} similar artists...")
+    for artist in list(similar_artists)[:16]:
+        results = search_songs(artist, limit=15)
+        add(results, f"similar:{artist}")
+        time.sleep(0.3)
+
+    # Source 3: Genre queries
+    if mode == "rap":
+        genre_queries = RAP_GENRE_QUERIES
+    else:
+        genre_queries = MIXED_GENRE_QUERIES
+    print(f"  [build {mode}] Searching {min(len(genre_queries), 24)} genres...")
+    for query in genre_queries[:24]:
+        results = search_songs(query, limit=25)
+        add(results, f"genre:{query}")
+        time.sleep(0.3)
+
+    # Source 4: Charts
+    print(f"  [build {mode}] Fetching charts...")
+    if mode == "rap":
+        chart_ids = [(19723756, "soaring"), (3779629, "new"), (3778678, "hot")]
+    else:
+        chart_ids = [(19723756, "soaring"), (3778678, "hot"),
+                      (71384707, "light"), (2884035, "original")]
+    for topid, label in chart_ids:
+        results = get_toplist(topid, num=30)
+        add(results, f"chart:{label}")
+        time.sleep(0.2)
+
+    print(f"  [build {mode}] Total: {len(candidates)} candidates")
+    result = list(candidates.values())
+    save_candidates(result, mode)
+    return result
+
+
+def _find_artist_id(name):
+    """Search for an artist ID by name. Returns first match ID or 0."""
+    data = ncm_get("/search", {"keywords": name, "type": 100, "limit": 1})
+    if data and data.get("code") == 200:
+        artists = data.get("result", {}).get("artists", [])
+        if artists:
+            return artists[0].get("id", 0)
+    return 0
+
+
+# ============================================================
 # HISTORY
 # ============================================================
 
@@ -455,19 +589,18 @@ def _fetch_focus(add):
 # SCORING
 # ============================================================
 
-def score_rap(song, taste, history):
-    """Score for rap mode."""
+def score_rap(song, mode_taste, history):
+    """Score a song for rap mode using mode-specific taste."""
     score = 0.0
     singers = [s.get("name", "") for s in song.get("singer", [])]
     singer_str = " ".join(singers).lower()
-    song_name = song.get("songname", "")
-    album = song.get("albumname", "")
-    text = f"{song_name} {album} {singer_str}".lower()
-    genre_weights = taste.get("genre_weights", {})
+    text = f"{song.get('songname','')} {song.get('albumname','')} {singer_str}".lower()
+    artist_weights = mode_taste.get("artist_weights", {})
+    genre_weights = mode_taste.get("genre_weights", {})
 
-    # Artist match
+    # Artist match (from mode-specific weights)
     for name in singers:
-        w = taste.get("artist_weights", {}).get(name, 0)
+        w = artist_weights.get(name, 0)
         score += w * 0.3
     score = min(score, 0.35)
 
@@ -487,23 +620,16 @@ def score_rap(song, taste, history):
                 "dream", "life", "death", "real", "truth", "struggle"]
     score += sum(1 for kw in story_kw if kw in text) * 0.025
 
-    # Collaboration
+    # Collaboration bonus
     if len(singers) > 1:
         score += 0.05
     if len(singers) > 2:
         score += 0.03
 
-    # Rap+rock crossover
-    if any(kw in text for kw in ["rock", "guitar", "band"]) and \
-       any(kw in text for kw in ["rap", "hip-hop", "feat"]):
-        score += 0.06
-
-    # Duration: prefer 2-5 min (duration in ms)
+    # Duration: prefer 2-5 min
     dur = (song.get("duration", 0) or 0) / 1000
     if 120 < dur < 320:
         score += 0.04
-    elif dur > 320 and any(kw in text for kw in ["story", "narrative"]):
-        score += 0.02
 
     # Source quality
     for src in song.get("_sources", []):
@@ -511,12 +637,8 @@ def score_rap(song, taste, history):
             score += 0.08
             break
     for src in song.get("_sources", []):
-        if src.startswith("ecosystem:"):
-            score += 0.06
-            break
-    for src in song.get("_sources", []):
-        if src.startswith("genre:"):
-            score += 0.03
+        if src.startswith("similar:"):
+            score += 0.05
             break
 
     # History feedback
@@ -528,76 +650,188 @@ def score_rap(song, taste, history):
         if name in skipped:
             score -= 0.03 * min(skipped.get(name, 0) / 3, 1.0)
 
-    # Novelty
-    seen_count = sum(1 for s in singers if s in taste.get("artist_weights", {}))
-    if seen_count == 0:
-        score += 0.1
+    # Claude Picks boost
+    cp_artists = history.get("claude_picks_artists", {})
+    for name in singers:
+        if name in cp_artists:
+            score += 0.1
+            break
+
+    # Novelty: not in seed artists
+    if not any(s in artist_weights for s in singers):
+        score += 0.05
 
     return max(0, score)
 
 
-def score_focus(song, taste, history):
-    """Score for focus mode."""
-    score = 0.2
+def score_mixed(song, mode_taste, history):
+    """Score a song for mixed mode — no genre bias, equal exploration."""
+    score = 0.0
     singers = [s.get("name", "") for s in song.get("singer", [])]
     singer_str = " ".join(singers).lower()
-    song_name = song.get("songname", "")
-    album = song.get("albumname", "")
-    text = f"{song_name} {album} {singer_str}".lower()
+    text = f"{song.get('songname','')} {song.get('albumname','')} {singer_str}".lower()
+    artist_weights = mode_taste.get("artist_weights", {})
 
-    pos_hits = sum(1 for kw in FOCUS_SCORE_KW["positive"] if kw in text)
-    score += pos_hits * 0.04
+    # Artist match
+    for name in singers:
+        w = artist_weights.get(name, 0)
+        score += w * 0.3
+    score = min(score, 0.35)
 
-    neg_hits = sum(1 for kw in FOCUS_SCORE_KW["negative"] if kw in text)
-    score -= neg_hits * 0.06
+    # Genre keyword — pure counting, no weights
+    genre_kw = [
+        "pop", "rock", "R&B", "soul", "jazz", "funk", "disco",
+        "indie", "alternative", "folk", "acoustic", "ballad",
+        "electronic", "synth", "ambient", "chill", "dream",
+        "Chinese", "Mandarin", "Cantonese", "classic",
+        "orchestral", "soundtrack", "OST", "piano", "guitar",
+        "world", "Latin", "reggae", "bossa",
+    ]
+    hits = sum(1 for kw in genre_kw if kw.lower() in text)
+    score += hits * 0.015
 
-    instrumental_kw = ["instrumental", "piano", "orchestral", "soundtrack", "OST",
-                       "acoustic", "classical", "meditation", "pure music", "纯音乐"]
-    if any(kw in text for kw in instrumental_kw):
-        score += 0.15
+    # Collaboration
+    if len(singers) > 1:
+        score += 0.04
 
+    # Duration: prefer 2-6 min
     dur = (song.get("duration", 0) or 0) / 1000
     if 120 < dur < 360:
         score += 0.05
 
-    for src in song.get("_sources", []):
-        if src.startswith("focus:"):
-            score += 0.06
-
-    if len(singers) > 2:
-        score -= 0.05
-    if len(singers) == 1:
-        score += 0.03
-
+    # History feedback
+    liked = history.get("liked_artists", {})
+    skipped = history.get("skipped_artists", {})
     for name in singers:
-        if name in taste.get("artist_weights", {}):
-            score += 0.02
+        if name in liked:
+            score += 0.05 * min(liked.get(name, 0) / 3, 1.0)
+        if name in skipped:
+            score -= 0.03 * min(skipped.get(name, 0) / 3, 1.0)
+
+    # Claude Picks
+    cp_artists = history.get("claude_picks_artists", {})
+    for name in singers:
+        if name in cp_artists:
+            score += 0.1
             break
 
+    # Novelty boost (higher for mixed)
+    if not any(s in artist_weights for s in singers):
+        score += 0.08
+
+    # Chat signals
+    chat_signals = history.get("chat_signals", [])
+    for sig in chat_signals[-5:]:
+        intent = sig.get("intent", "")
+        if intent == "like_artist":
+            for name in singers:
+                if sig.get("artist", "").lower() in name.lower():
+                    score += 0.05 * sig.get("weight", 0.5)
+        elif intent == "skip_artist":
+            for name in singers:
+                if sig.get("artist", "").lower() in name.lower():
+                    score -= 0.03 * sig.get("weight", 0.5)
+
     return max(0, score)
+
+
+def score_candidates(candidates, mode="rap"):
+    """Score all candidates in a pool. Modifies _score in-place. Returns sorted list."""
+    taste = load_taste()
+    history = load_history()
+    mode_taste = get_mode_taste(taste, mode)
+    score_fn = score_rap if mode == "rap" else score_mixed
+
+    for song in candidates:
+        song["_score"] = round(score_fn(song, mode_taste, history), 3)
+
+    candidates.sort(key=lambda s: s["_score"], reverse=True)
+    save_candidates(candidates, mode)
+    return candidates
+
+
+def rescore_unplayed(candidates, mode="rap"):
+    """Re-score only unplayed songs. Much faster than full score_candidates."""
+    taste = load_taste()
+    history = load_history()
+    mode_taste = get_mode_taste(taste, mode)
+    score_fn = score_rap if mode == "rap" else score_mixed
+
+    for song in candidates:
+        if not song.get("_played", False):
+            song["_score"] = round(score_fn(song, mode_taste, history), 3)
+
+    candidates.sort(key=lambda s: s["_score"], reverse=True)
+    save_candidates(candidates, mode)
+    return candidates
+
+
+def expand_from_simi(song_ids, candidates, mode="rap"):
+    """
+    Fetch similar songs for given IDs and add to candidate pool.
+    Returns list of newly added candidates.
+    """
+    existing_ids = {str(s["songid"]) for s in candidates}
+    new_songs = []
+
+    for sid in song_ids[:10]:
+        data = ncm_get("/simi/song", {"id": sid})
+        if not data or data.get("code") != 200:
+            continue
+        for s in data.get("songs", [])[:5]:
+            nid = str(s.get("id", ""))
+            if nid in existing_ids:
+                continue
+            song = {
+                "songname": s.get("name", ""),
+                "songid": s.get("id", 0),
+                "duration": s.get("duration", 0),
+                "singer": [{"name": a.get("name", "")} for a in s.get("artists", [])],
+                "albumname": s.get("album", {}).get("name", ""),
+                "albumid": s.get("album", {}).get("id", 0),
+                "_sources": [f"simi:{sid}"],
+                "_score": 0,
+                "_played": False,
+                "_from_simi": True,
+            }
+            candidates.append(song)
+            existing_ids.add(nid)
+            new_songs.append(song)
+        time.sleep(0.2)
+
+    if new_songs:
+        print(f"  [expand] Added {len(new_songs)} similar songs")
+        taste = load_taste()
+        history = load_history()
+        mode_taste = get_mode_taste(taste, mode)
+        score_fn = score_rap if mode == "rap" else score_mixed
+        for song in new_songs:
+            song["_score"] = round(score_fn(song, mode_taste, history), 3)
+        candidates.sort(key=lambda s: s["_score"], reverse=True)
+        save_candidates(candidates, mode)
+
+    return new_songs
 
 
 # ============================================================
 # SELECTION
 # ============================================================
 
-def select_picks(candidates, taste, history, mode="rap"):
-    """Score, rank, and select picks."""
-    scored = []
-    score_fn = score_rap if mode == "rap" else score_focus
-
-    for song in candidates:
-        s = score_fn(song, taste, history)
-        song["_score"] = round(s, 3)
-        scored.append(song)
-
-    scored.sort(key=lambda x: x["_score"], reverse=True)
+def select_picks(candidates, mode="rap"):
+    """
+    Select diverse top picks from scored candidates.
+    Max 3 per artist, min 12 unique artists.
+    """
+    if not candidates:
+        return []
+    if not any(s.get("_score", 0) > 0 for s in candidates):
+        score_candidates(candidates, mode)
 
     picks = []
     artist_counts = Counter()
     primary_artists = set()
 
-    for song in scored:
+    for song in candidates:
         singers = [s.get("name", "") for s in song.get("singer", [])]
         if any(artist_counts[s] >= MAX_PER_ARTIST for s in singers):
             continue
@@ -611,7 +845,7 @@ def select_picks(candidates, taste, history, mode="rap"):
 
     # Ensure minimum diversity
     if len(primary_artists) < MIN_ARTISTS:
-        remaining = [s for s in scored if s not in picks]
+        remaining = [s for s in candidates if s not in picks]
         for song in remaining:
             singers = [s.get("name", "") for s in song.get("singer", [])]
             if singers and singers[0] not in primary_artists:
@@ -629,35 +863,28 @@ def select_picks(candidates, taste, history, mode="rap"):
 # ============================================================
 
 def generate(mode="rap"):
-    """Generate recommendations for the given mode."""
-    label = {"rap": "Rap/Vibe", "focus": "Focus/Chill"}[mode]
+    """CLI entry point — build candidates, score, and output today.json."""
+    label = {"rap": "Rap/Vibe", "mixed": "Mixed/Vibe"}[mode]
     print("=" * 60)
-    print(f"  Music Recommendation Engine — {label}")
+    print(f"  Music Recommendation Engine v2 — {label}")
     print(f"  Source: NetEase Cloud Music API @ {NCM}")
     print("=" * 60)
 
-    print("\n[1/4] Loading taste profile...")
-    taste = load_taste_profile()
-    print(f"  {taste['total_songs']} known songs, {taste['total_artists']} artists")
+    print("\n[1/3] Building candidate pool...")
+    candidates = build_candidates(mode)
 
-    print("\n[2/4] Loading history...")
-    history = load_history()
+    print(f"\n[2/3] Scoring {len(candidates)} candidates...")
+    candidates = score_candidates(candidates, mode)
 
-    print(f"\n[3/4] Fetching candidates ({mode} mode)...")
-    candidates = fetch_candidates(taste, history, mode)
+    print(f"\n[3/3] Selecting {DAILY_PICKS} picks...")
+    picks = select_picks(candidates, mode)
 
-    print(f"\n[4/4] Scoring and selecting {DAILY_PICKS} picks...")
-    picks = select_picks(candidates, taste, history, mode)
-
-    # Fetch playable URLs for top 20 picks (to avoid excessive API calls)
+    # Fetch playable URLs for top picks
     print(f"\n  Fetching playable URLs for top picks...")
-    song_urls = {}
     for song in picks[:20]:
         url_info = get_song_url(song["songid"])
         if url_info:
-            song_urls[str(song["songid"])] = url_info
-        status = "OK" if url_info else "NO (maybe VIP needed)"
-        print(f"    [{len(song_urls)}/20] {song['songname'][:30]:30s} -> {status}")
+            song["url"] = url_info
         time.sleep(0.15)
 
     today_str = datetime.now().strftime("%Y-%m-%d")
@@ -668,23 +895,20 @@ def generate(mode="rap"):
         "count": len(picks),
         "songs": [],
     }
-
     for i, song in enumerate(picks):
-        sid = str(song["songid"])
         entry = {
             "rank": i + 1,
             "songname": song["songname"],
             "songid": song["songid"],
-            "singer": [{"name": s.get("name", "")} for s in song.get("singer", [])],
+            "singer": song.get("singer", []),
             "albumname": song.get("albumname", ""),
             "albumid": song.get("albumid", 0),
             "duration": song.get("duration", 0),
             "score": song["_score"],
             "sources": song.get("_sources", []),
         }
-        # Attach URL if we fetched it
-        if sid in song_urls:
-            entry["url"] = song_urls[sid]
+        if "url" in song:
+            entry["url"] = song["url"]
         output["songs"].append(entry)
 
     out_file = TODAY_FILE if mode == "rap" else TODAY_FOCUS_FILE
@@ -693,9 +917,11 @@ def generate(mode="rap"):
         json.dump(output, f, ensure_ascii=False, indent=2)
 
     # Update history
-    history["recommended_ids"].extend(str(s["songid"]) for s in output["songs"])
+    history = load_history()
+    history.setdefault("recommended_ids", []).extend(
+        str(s["songid"]) for s in output["songs"])
     history["recommended_ids"] = history["recommended_ids"][-5000:]
-    history["dates"].append(today_str)
+    history.setdefault("dates", []).append(today_str)
     save_history(history)
 
     print(f"\n{'='*60}")
@@ -714,8 +940,8 @@ def generate(mode="rap"):
 def generate_both():
     r = generate("rap")
     print("\n")
-    f = generate("focus")
-    return {"rap": r, "focus": f}
+    m = generate("mixed")
+    return {"rap": r, "mixed": m}
 
 
 if __name__ == "__main__":
@@ -724,7 +950,7 @@ if __name__ == "__main__":
         arg = sys.argv[1].lower()
         if arg in ("--mode", "-m"):
             mode = sys.argv[2].lower() if len(sys.argv) > 2 else "both"
-        elif arg in ("rap", "focus", "both"):
+        elif arg in ("rap", "mixed", "both"):
             mode = arg
 
     if mode == "both":

@@ -1,0 +1,10 @@
+data/today.json
+data/today_focus.json
+data/taste.json
+data/history.json
+data/ncm_cookie.json
+data/_qr.png
+data/_playing.mp3*
+data/covers/
+__pycache__/
+*.pyc

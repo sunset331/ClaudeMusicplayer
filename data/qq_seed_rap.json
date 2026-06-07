@@ -1,0 +1,3943 @@
+{
+  "source": "qq_rap",
+  "imported_at": "2026-06-08 01:44:19",
+  "total": 163,
+  "matched": 162,
+  "songs": [
+    {
+      "name": "Welcome To The Party",
+      "artist": "Pop Smoke",
+      "artists": [
+        "Pop Smoke"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Welcome To The Party",
+        "songid": 1380277415,
+        "singer": [
+          {
+            "name": "Pop Smoke"
+          }
+        ],
+        "albumname": "Meet The Woo",
+        "albumid": 80621270,
+        "duration": 214960,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "No Church In The Wild",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Ye (侃爷)",
+        "Frank Ocean",
+        "The-Dream"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "No Church In The Wild",
+        "songid": 18614252,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Kanye West"
+          },
+          {
+            "name": "Frank Ocean"
+          }
+        ],
+        "albumname": "Watch The Throne (Deluxe Edition)",
+        "albumid": 1707467,
+        "duration": 272506,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Niggas In Paris",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Ye (侃爷)"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Niggas In Paris",
+        "songid": 18614254,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Kanye West"
+          }
+        ],
+        "albumname": "Watch The Throne (Deluxe Edition)",
+        "albumid": 1707467,
+        "duration": 219382,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Pure Water",
+      "artist": "Mustard",
+      "artists": [
+        "Mustard",
+        "Migos"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Pure Water",
+        "songid": 1888819706,
+        "singer": [
+          {
+            "name": "Mustard"
+          },
+          {
+            "name": "Migos"
+          }
+        ],
+        "albumname": "Football Game Day",
+        "albumid": 135102111,
+        "duration": 194519,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Homicide",
+      "artist": "Logic",
+      "artists": [
+        "Logic",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Homicide",
+        "songid": 1364362045,
+        "singer": [
+          {
+            "name": "Logic"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Confessions of a Dangerous Mind",
+        "albumid": 79038833,
+        "duration": 245386,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Without Me",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Without Me",
+        "songid": 1299818,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Singles (Eminem album)",
+        "albumid": 133990,
+        "duration": 290306,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "I DON'T BARGAIN",
+      "artist": "ALLDAY PROJECT",
+      "artists": [
+        "ALLDAY PROJECT"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "I DON'T BARGAIN",
+        "songid": 3357329218,
+        "singer": [
+          {
+            "name": "ALLDAY PROJECT"
+          }
+        ],
+        "albumname": "I DON'T BARGAIN",
+        "albumid": 365380961,
+        "duration": 170149,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "sheluvme",
+      "artist": "Tai Verdes",
+      "artists": [
+        "Tai Verdes"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "sheluvme",
+        "songid": 1955086147,
+        "singer": [
+          {
+            "name": "Tai Verdes"
+          }
+        ],
+        "albumname": "sheluvme",
+        "albumid": 146345850,
+        "duration": 150906,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "All My Life",
+      "artist": "Lil Durk",
+      "artists": [
+        "Lil Durk",
+        "J. Cole"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "All My Life",
+        "songid": 2044734734,
+        "singer": [
+          {
+            "name": "Lil Durk"
+          },
+          {
+            "name": "J. Cole"
+          }
+        ],
+        "albumname": "All My Life",
+        "albumid": 164979546,
+        "duration": 223933,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Everybody Dies In Their Nightmares",
+      "artist": "XXXTentacion",
+      "artists": [
+        "XXXTentacion"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Everybody Dies In Their Nightmares",
+        "songid": 501133800,
+        "singer": [
+          {
+            "name": "XXXTENTACION"
+          }
+        ],
+        "albumname": "17",
+        "albumid": 36037192,
+        "duration": 95466,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Moonlight",
+      "artist": "XXXTentacion",
+      "artists": [
+        "XXXTentacion"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Moonlight",
+        "songid": 545350934,
+        "singer": [
+          {
+            "name": "XXXTENTACION"
+          }
+        ],
+        "albumname": "?",
+        "albumid": 37873747,
+        "duration": 135090,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Boom Boom Pow",
+      "artist": "Black Eyed Peas",
+      "artists": [
+        "Black Eyed Peas"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Boom Boom Pow (Clean)",
+        "songid": 3949444,
+        "singer": [
+          {
+            "name": "Black Eyed Peas"
+          }
+        ],
+        "albumname": "Boom Boom Pow",
+        "albumid": 399567,
+        "duration": 218626,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Everyday Normal Guy",
+      "artist": "Jon Lajoie",
+      "artists": [
+        "Jon Lajoie"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Everyday Normal Guy",
+        "songid": 1516854,
+        "singer": [
+          {
+            "name": "Jon lajoie"
+          }
+        ],
+        "albumname": "You Want Some of This?",
+        "albumid": 154323,
+        "duration": 201493,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Jiggle Jiggle",
+      "artist": "Duke & Jones",
+      "artists": [
+        "Duke & Jones",
+        "Louis Theroux"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Jiggle Jiggle",
+        "songid": 1946751557,
+        "singer": [
+          {
+            "name": "Duke & Jones"
+          },
+          {
+            "name": "Louis Theroux"
+          }
+        ],
+        "albumname": "Jiggle Jiggle",
+        "albumid": 144854370,
+        "duration": 97208,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Ode To Nujabes",
+      "artist": "Funky DL",
+      "artists": [
+        "Funky DL"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Ode To Nujabes (Album Version)",
+        "songid": 17721777,
+        "singer": [
+          {
+            "name": "Funky DL"
+          }
+        ],
+        "albumname": "Blackcurrent Jazz 2",
+        "albumid": 1631657,
+        "duration": 220653,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "1970 Somethin'",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "1970 Somethin' (feat. The Game and Faith Evans)",
+        "songid": 21799519,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          },
+          {
+            "name": "The Game"
+          },
+          {
+            "name": "Faith Evans"
+          }
+        ],
+        "albumname": "Duets: The Final Chapter",
+        "albumid": 2005435,
+        "duration": 205920,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Run This Town",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Rihanna",
+        "Ye (侃爷)"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Run This Town",
+        "songid": 18614146,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Rihanna"
+          },
+          {
+            "name": "Kanye West"
+          }
+        ],
+        "albumname": "The Hits Collection Volume One [International Version (Explicit)]",
+        "albumid": 1707459,
+        "duration": 268013,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "GDFR (feat. Sage the Gemini & Lookas)",
+      "artist": "Flo Rida",
+      "artists": [
+        "Flo Rida",
+        "Sage the Gemini",
+        "LooKas"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "GDFR (feat. Sage the Gemini & Lookas)",
+        "songid": 29535349,
+        "singer": [
+          {
+            "name": "Flo Rida"
+          },
+          {
+            "name": "Sage the Gemini"
+          },
+          {
+            "name": "Lookas"
+          }
+        ],
+        "albumname": "GDFR (feat. Sage The Gemini & Lookas)",
+        "albumid": 3029856,
+        "duration": 190185,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Panda",
+      "artist": "Desiigner",
+      "artists": [
+        "Desiigner"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Panda",
+        "songid": 405089420,
+        "singer": [
+          {
+            "name": "Desiigner"
+          }
+        ],
+        "albumname": "Panda",
+        "albumid": 34504248,
+        "duration": 246761,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Ratha Be Ya Nigga",
+      "artist": "2Pac",
+      "artists": [
+        "2Pac",
+        "Richie Rich"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Ratha Be Ya Nigga",
+        "songid": 1312061181,
+        "singer": [
+          {
+            "name": "2Pac"
+          },
+          {
+            "name": "Richie Rich"
+          }
+        ],
+        "albumname": "All Eyez On Me",
+        "albumid": 73554727,
+        "duration": 254014,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Square Dance",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Square Dance",
+        "songid": 17572298,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Eminem Show",
+        "albumid": 1618493,
+        "duration": 323720,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "San Andreas",
+      "artist": "Dan Bull",
+      "artists": [
+        "Dan Bull"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "San Andreas",
+        "songid": 511132432,
+        "singer": [
+          {
+            "name": "Dan Bull"
+          }
+        ],
+        "albumname": "San Andreas (GTA San Andreas Rap)",
+        "albumid": 36485460,
+        "duration": 168772,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Blueprint 2",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Blueprint 2",
+        "songid": 1485774947,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          }
+        ],
+        "albumname": "The Blueprint Collector's Edition (Explicit Version)",
+        "albumid": 96565508,
+        "duration": 289360,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Patience",
+      "artist": "Nas",
+      "artists": [
+        "Nas",
+        "Damian Marley"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Patience",
+        "songid": 1786890,
+        "singer": [
+          {
+            "name": "Nas"
+          },
+          {
+            "name": "Damian Marley"
+          }
+        ],
+        "albumname": "Distant Relatives",
+        "albumid": 180583,
+        "duration": 345093,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Murdergram Deux (feat. Eminem)",
+      "artist": "LL Cool J",
+      "artists": [
+        "LL Cool J",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Murdergram Deux",
+        "songid": 2622363250,
+        "singer": [
+          {
+            "name": "LL Cool J"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Murdergram Deux",
+        "albumid": 246472759,
+        "duration": 185456,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Fuel",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "JID"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Fuel",
+        "songid": 2607261111,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "JID"
+          }
+        ],
+        "albumname": "The Death of Slim Shady (Coup De Grâce)",
+        "albumid": 241945218,
+        "duration": 213646,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Role Model",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Role Model",
+        "songid": 17572258,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Slim Shady LP",
+        "albumid": 1618491,
+        "duration": 205400,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Tobey",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Big Sean",
+        "BabyTron"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Tobey",
+        "songid": 2604354350,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Big Sean"
+          },
+          {
+            "name": "Babytron"
+          }
+        ],
+        "albumname": "Tobey",
+        "albumid": 241020329,
+        "duration": 284892,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Houdini",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Houdini",
+        "songid": 2161876742,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Houdini",
+        "albumid": 197991155,
+        "duration": 227239,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Kill You",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Kill You",
+        "songid": 17572421,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP",
+        "albumid": 1618499,
+        "duration": 264466,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Just Lose It",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Just Lose It",
+        "songid": 17572466,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Just Lose It",
+        "albumid": 1618503,
+        "duration": 248732,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Insane",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Insane",
+        "songid": 17572216,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Relapse",
+        "albumid": 1618489,
+        "duration": 181360,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "So Far...",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "So Far...",
+        "songid": 2096348228,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP2 (Expanded Edition)",
+        "albumid": 178287401,
+        "duration": 317580,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Majesty",
+      "artist": "Nicki Minaj",
+      "artists": [
+        "Nicki Minaj",
+        "Eminem",
+        "Labrinth"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Majesty",
+        "songid": 1300595030,
+        "singer": [
+          {
+            "name": "Nicki Minaj"
+          },
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Labrinth"
+          }
+        ],
+        "albumname": "Queen (Deluxe)",
+        "albumid": 72073226,
+        "duration": 295645,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Tone Deaf",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Tone Deaf",
+        "songid": 1805328667,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Music To Be Murdered By - Side B (Deluxe Edition)",
+        "albumid": 120610932,
+        "duration": 290136,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Favorite Bitch",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Ty Dolla $ign"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Favorite Bitch",
+        "songid": 2045590068,
+        "singer": [
+          {
+            "name": "GoldynGambit"
+          }
+        ],
+        "albumname": "Favorite *****",
+        "albumid": 165180883,
+        "duration": 174027,
+        "match_score": 5
+      }
+    },
+    {
+      "name": "Lock It Up",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Anderson .Paak"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lock It Up",
+        "songid": 1417093538,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Anderson .Paak"
+          }
+        ],
+        "albumname": "Music To Be Murdered By",
+        "albumid": 85023223,
+        "duration": 170226,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Migos",
+      "artist": "Migos",
+      "artists": [
+        "Migos",
+        "Lil Uzi Vert"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Slide",
+        "songid": 461544911,
+        "singer": [
+          {
+            "name": "Calvin Harris"
+          },
+          {
+            "name": "Frank Ocean"
+          },
+          {
+            "name": "Migos"
+          }
+        ],
+        "albumname": "Slide",
+        "albumid": 35196404,
+        "duration": 230876,
+        "match_score": 4
+      }
+    },
+    {
+      "name": "Zeus",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "White Gold"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Zeus",
+        "songid": 1805328674,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "White Gold"
+          }
+        ],
+        "albumname": "Music To Be Murdered By - Side B (Deluxe Edition)",
+        "albumid": 120610932,
+        "duration": 230398,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Killer",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Jack Harlow",
+        "Cordae"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Killer (Remix)",
+        "songid": 1848207273,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Jack Harlow"
+          },
+          {
+            "name": "Cordae"
+          }
+        ],
+        "albumname": "Killer (Remix)",
+        "albumid": 128016566,
+        "duration": 236665,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Я буду ебать",
+      "artist": "MOREART",
+      "artists": [
+        "MOREART",
+        "IHI"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Я буду ебать (feat. IHI)",
+        "songid": 1496199618,
+        "singer": [
+          {
+            "name": "MOREART"
+          },
+          {
+            "name": "IHI"
+          }
+        ],
+        "albumname": "Я буду ебать (feat. IHI)",
+        "albumid": 98440739,
+        "duration": 141176,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Run Up",
+      "artist": "The Game",
+      "artists": [
+        "The Game",
+        "Ice Cube",
+        "YG"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Run Up",
+        "songid": 415904514,
+        "singer": [
+          {
+            "name": "The Game"
+          },
+          {
+            "name": "Ice Cube"
+          },
+          {
+            "name": "YG"
+          }
+        ],
+        "albumname": "NWA2016",
+        "albumid": 34726362,
+        "duration": 245365,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "The World Is Mine",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "The World Is Mine",
+        "songid": 2094777155,
+        "singer": [
+          {
+            "name": "X-Ray Dog"
+          }
+        ],
+        "albumname": "Bark Bite",
+        "albumid": 177897458,
+        "duration": 146142,
+        "match_score": 5
+      }
+    },
+    {
+      "name": "Sasquatch",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Sasquatch",
+        "songid": 27920370,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "Sasquatch - Single",
+        "albumid": 2695230,
+        "duration": 240000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Doin' What It 'Pose 2Do",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Doin' What It 'Pose 2Do",
+        "songid": 22495836,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "Laugh Now, Cry Later",
+        "albumid": 2060414,
+        "duration": 248987,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "You Know How We Do It",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "You Know How We Do It",
+        "songid": 18353552,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "Greatest Hits",
+        "albumid": 1685550,
+        "duration": 232786,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "'Till I Collapse",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Nate Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "'Till I Collapse",
+        "songid": 17572311,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Nate Dogg"
+          }
+        ],
+        "albumname": "The Eminem Show",
+        "albumid": 1618493,
+        "duration": 297786,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "The Way I Am",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "The Way I Am",
+        "songid": 17572426,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP",
+        "albumid": 1618499,
+        "duration": 289266,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Guilty Conscience",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Dr. Dre"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Guilty Conscience",
+        "songid": 17572252,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Dr. Dre"
+          }
+        ],
+        "albumname": "The Slim Shady LP",
+        "albumid": 1618491,
+        "duration": 199333,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "W.T.P.",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "W.T.P.",
+        "songid": 1297692,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Recovery (Deluxe Edition)",
+        "albumid": 133852,
+        "duration": 238173,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "So Bad",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "So Bad",
+        "songid": 17572245,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Recovery",
+        "albumid": 1618490,
+        "duration": 325346,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Gin & Juice",
+      "artist": "Snoop Dogg",
+      "artists": [
+        "Snoop Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Gin & Juice (Radio Version)",
+        "songid": 27398744,
+        "singer": [
+          {
+            "name": "Snoop Dogg"
+          }
+        ],
+        "albumname": "Gin and Juice",
+        "albumid": 2606608,
+        "duration": 223000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Drop It Like It's Hot",
+      "artist": "Snoop Dogg",
+      "artists": [
+        "Snoop Dogg",
+        "Pharrell Williams"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Drop It Like It's Hot",
+        "songid": 21614772,
+        "singer": [
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Pharrell Williams"
+          }
+        ],
+        "albumname": "R&G (Rhythm & Gangsta): The Masterpiece",
+        "albumid": 1991190,
+        "duration": 266066,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Go To Church_Ice Cube & Snoop Dogg／Lil＇ Jon",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Go To Church (Dirty)",
+        "songid": 26778508,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          },
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Lil Jon"
+          }
+        ],
+        "albumname": "Go To Church",
+        "albumid": 2552721,
+        "duration": 232000,
+        "match_score": 7
+      }
+    },
+    {
+      "name": "Warning",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Warning",
+        "songid": 21799561,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Ready To Die",
+        "albumid": 2005437,
+        "duration": 220493,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Unbreakable",
+      "artist": "Michael Jackson",
+      "artists": [
+        "Michael Jackson",
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Unbreakable",
+        "songid": 21178372,
+        "singer": [
+          {
+            "name": "Michael Jackson"
+          },
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Invincible",
+        "albumid": 1958222,
+        "duration": 385915,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Hey Mama(feat. Nicki Minaj, Bebe Rexha & Afrojack)",
+      "artist": "David Guetta",
+      "artists": [
+        "David Guetta",
+        "Afrojack",
+        "Bebe Rexha",
+        "Nicki Minaj"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Hey Mama (feat. Nicki Minaj, Bebe Rexha & Afrojack)",
+        "songid": 29747517,
+        "singer": [
+          {
+            "name": "David Guetta"
+          },
+          {
+            "name": "Nicki Minaj"
+          },
+          {
+            "name": "Bebe Rexha"
+          },
+          {
+            "name": "Afrojack"
+          }
+        ],
+        "albumname": "Listen",
+        "albumid": 3029302,
+        "duration": 192560,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Starships",
+      "artist": "Nicki Minaj",
+      "artists": [
+        "Nicki Minaj"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Starships",
+        "songid": 17559973,
+        "singer": [
+          {
+            "name": "Nicki Minaj"
+          }
+        ],
+        "albumname": "Pink Friday ... Roman Reloaded",
+        "albumid": 1617217,
+        "duration": 210626,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Music Box",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Music Box",
+        "songid": 1297861,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "American Nightmare",
+        "albumid": 133867,
+        "duration": 304906,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Stay Wide Awake",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Stay Wide Awake",
+        "songid": 17572175,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Relapse: Refill",
+        "albumid": 1618487,
+        "duration": 319973,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "You Don't Know",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "50 Cent",
+        "Ca$his",
+        "Lloyd Banks"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "You Don't Know",
+        "songid": 17572385,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "50 Cent"
+          },
+          {
+            "name": "Ca$his"
+          },
+          {
+            "name": "Lloyd Banks"
+          }
+        ],
+        "albumname": "Eminem Presents: The Re-Up",
+        "albumid": 1618497,
+        "duration": 257906,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Marsh",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Marsh",
+        "songid": 1417094351,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Music To Be Murdered By",
+        "albumid": 85023223,
+        "duration": 200573,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "That's All She Wrote",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "That's All She Wrote",
+        "songid": 21799791,
+        "singer": [
+          {
+            "name": "T.I."
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "No Mercy",
+        "albumid": 2005464,
+        "duration": 318360,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Is This Love ('09)",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "50 Cent"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Is This Love ('09)",
+        "songid": 1969730182,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "50 Cent"
+          }
+        ],
+        "albumname": "Curtain Call 2",
+        "albumid": 149224802,
+        "duration": 212033,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Realest",
+      "artist": "Ez Mil",
+      "artists": [
+        "Ez Mil",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Realest",
+        "songid": 2070260901,
+        "singer": [
+          {
+            "name": "Ez Mil"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Realest",
+        "albumid": 171391089,
+        "duration": 217470,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "I Lied",
+      "artist": "Joyner Lucas",
+      "artists": [
+        "Joyner Lucas"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "I Lied (Intro)",
+        "songid": 1434171176,
+        "singer": [
+          {
+            "name": "Joyner Lucas"
+          }
+        ],
+        "albumname": "ADHD",
+        "albumid": 86852776,
+        "duration": 251496,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Up Down (Step & Walk)",
+      "artist": "Ez Mil",
+      "artists": [
+        "Ez Mil"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Up Down (Step & Walk)",
+        "songid": 1967338142,
+        "singer": [
+          {
+            "name": "Ez Mil"
+          }
+        ],
+        "albumname": "DU4LI7Y",
+        "albumid": 148738953,
+        "duration": 209192,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "HandClap",
+      "artist": "Fitz and The Tantrums",
+      "artists": [
+        "Fitz and The Tantrums"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "HandClap",
+        "songid": 407839677,
+        "singer": [
+          {
+            "name": "Fitz and The Tantrums"
+          }
+        ],
+        "albumname": "Fitz and The Tantrums (Deluxe Edition)",
+        "albumid": 34596085,
+        "duration": 193253,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "What's Up Danger",
+      "artist": "Blackway",
+      "artists": [
+        "Blackway",
+        "Black Caviar"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "What's Up Danger",
+        "songid": 1333335577,
+        "singer": [
+          {
+            "name": "Blackway"
+          },
+          {
+            "name": "Black Caviar"
+          }
+        ],
+        "albumname": "Spider-Man: Into the Spider-Verse (Soundtrack From & Inspired by the Motion Picture)",
+        "albumid": 74878945,
+        "duration": 222306,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Framed",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Framed",
+        "songid": 523249568,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Revival",
+        "albumid": 36952205,
+        "duration": 252960,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Bad and Boujee",
+      "artist": "Migos",
+      "artists": [
+        "Migos",
+        "Lil Uzi Vert"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Bad and Boujee",
+        "songid": 427595614,
+        "singer": [
+          {
+            "name": "Migos"
+          },
+          {
+            "name": "Lil Uzi Vert"
+          }
+        ],
+        "albumname": "Bad and Boujee",
+        "albumid": 34839934,
+        "duration": 334497,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Big Poppa",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Big Poppa",
+        "songid": 21799569,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Ready To Die",
+        "albumid": 2005437,
+        "duration": 249586,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Happy Birthday",
+      "artist": "Flipsyde",
+      "artists": [
+        "Flipsyde"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Happy Birthday",
+        "songid": 28793807,
+        "singer": [
+          {
+            "name": "Flipsyde"
+          }
+        ],
+        "albumname": "We The People",
+        "albumid": 1637091,
+        "duration": 195813,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "GOOBA",
+      "artist": "6ix9ine",
+      "artists": [
+        "6ix9ine"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "GOOBA",
+        "songid": 1475720335,
+        "singer": [
+          {
+            "name": "6ix9ine"
+          }
+        ],
+        "albumname": "TattleTales",
+        "albumid": 94789534,
+        "duration": 132303,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "HUMBLE.",
+      "artist": "Kendrick Lamar",
+      "artists": [
+        "Kendrick Lamar"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "HUMBLE.",
+        "songid": 469104548,
+        "singer": [
+          {
+            "name": "Kendrick Lamar"
+          }
+        ],
+        "albumname": "HUMBLE.",
+        "albumid": 35297768,
+        "duration": 181479,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Hypnotize",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Hypnotize",
+        "songid": 1320329093,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Playlist: Hip Hop",
+        "albumid": 74085514,
+        "duration": 230063,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Go To Sleep",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "DMX",
+        "Obie Trice"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Go To Sleep (from the \"Cradle 2 The Grave\" soundtrack)",
+        "songid": 1299725,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Obie Trice"
+          },
+          {
+            "name": "DMX"
+          }
+        ],
+        "albumname": "E",
+        "albumid": 133983,
+        "duration": 282076,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Hip Hop Police",
+      "artist": "Chamillionaire",
+      "artists": [
+        "Chamillionaire",
+        "Slick Rick"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Hip Hop Police (Main)",
+        "songid": 16969713,
+        "singer": [
+          {
+            "name": "Chamillionaire"
+          },
+          {
+            "name": "Slick Rick"
+          }
+        ],
+        "albumname": "Ultimate Victory",
+        "albumid": 1564318,
+        "duration": 251520,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Hold Ya Head",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Hold Ya Head",
+        "songid": 445462110,
+        "singer": [
+          {
+            "name": "RECØ"
+          },
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Hold Ya Head",
+        "albumid": 35023899,
+        "duration": 277263,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Hello",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube",
+        "Dr. Dre",
+        "MC Ren"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Hello",
+        "songid": 18353636,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          },
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "MC Ren"
+          }
+        ],
+        "albumname": "War & Peace Vol. 2 (The Peace Disc)",
+        "albumid": 1685555,
+        "duration": 232533,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Legacy",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Legacy",
+        "songid": 27906325,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP2 (Deluxe)",
+        "albumid": 2693025,
+        "duration": 296269,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "I Wanna *** You",
+      "artist": "Snoop Dogg",
+      "artists": [
+        "Snoop Dogg",
+        "Akon"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "I Wanna Fuck You",
+        "songid": 21614604,
+        "singer": [
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Akon"
+          }
+        ],
+        "albumname": "Tha Blue Carpet Treatment",
+        "albumid": 1991180,
+        "duration": 178840,
+        "match_score": 4
+      }
+    },
+    {
+      "name": "Ballin",
+      "artist": "Logic",
+      "artists": [
+        "Logic"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Ballin",
+        "songid": 572086453,
+        "singer": [
+          {
+            "name": "Logic"
+          }
+        ],
+        "albumname": "Uncle Drew (Original Motion Picture Soundtrack)",
+        "albumid": 39636073,
+        "duration": 166138,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Still Ballin",
+      "artist": "Logic",
+      "artists": [
+        "Logic",
+        "Wiz Khalifa"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Still Ballin",
+        "songid": 1364362052,
+        "singer": [
+          {
+            "name": "Logic"
+          },
+          {
+            "name": "Wiz Khalifa"
+          }
+        ],
+        "albumname": "Confessions of a Dangerous Mind",
+        "albumid": 79038833,
+        "duration": 240013,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Smack That",
+      "artist": "Akon",
+      "artists": [
+        "Akon",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Smack That",
+        "songid": 986970,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Akon"
+          }
+        ],
+        "albumname": "Da Spotlight (Mixtape)",
+        "albumid": 103551,
+        "duration": 212793,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "KillShot",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Killshot",
+        "songid": 1311076476,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Killshot",
+        "albumid": 73434397,
+        "duration": 253579,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Jigga What / Faint",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Linkin Park"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Jigga What / Faint",
+        "songid": 18614270,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Linkin Park"
+          }
+        ],
+        "albumname": "Collision Course (Deluxe Version)",
+        "albumid": 1707468,
+        "duration": 211173,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Believe",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Believe",
+        "songid": 523250558,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Revival",
+        "albumid": 36952205,
+        "duration": 315346,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Barbie Dreams",
+      "artist": "Nicki Minaj",
+      "artists": [
+        "Nicki Minaj"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Barbie Dreams",
+        "songid": 1300595035,
+        "singer": [
+          {
+            "name": "Nicki Minaj"
+          }
+        ],
+        "albumname": "Queen (Deluxe)",
+        "albumid": 72073226,
+        "duration": 279877,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Gnat",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Gnat",
+        "songid": 1805327782,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Music To Be Murdered By - Side B (Deluxe Edition)",
+        "albumid": 120610932,
+        "duration": 224656,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Nuthin' But A G Thang",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Nuthin But A G'Thang",
+        "songid": 1912757016,
+        "singer": [
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Dr. Dre"
+          }
+        ],
+        "albumname": "Black Mafia Family The Ultimate Hip Hop Compilation",
+        "albumid": 138982964,
+        "duration": 235892,
+        "match_score": 4
+      }
+    },
+    {
+      "name": "Gospel",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Gospel",
+        "songid": 1917599630,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Gospel",
+        "albumid": 139922175,
+        "duration": 210027,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Beautiful",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Beautiful",
+        "songid": 1297941,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Beautiful",
+        "albumid": 133873,
+        "duration": 393299,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "DNA.",
+      "artist": "Kendrick Lamar",
+      "artists": [
+        "Kendrick Lamar"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "DNA.",
+        "songid": 472045048,
+        "singer": [
+          {
+            "name": "Kendrick Lamar"
+          }
+        ],
+        "albumname": "DAMN.",
+        "albumid": 35338681,
+        "duration": 185946,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "From The D 2 The LBC",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Snoop Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "From The D 2 The LBC",
+        "songid": 1958674674,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Snoop Dogg"
+          }
+        ],
+        "albumname": "From The D 2 The LBC",
+        "albumid": 147034804,
+        "duration": 215120,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Remember the Name (feat. Styles of Beyond)",
+      "artist": "Fort Minor",
+      "artists": [
+        "Fort Minor",
+        "Styles of Beyond"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Remember The Name (feat. Styles Of Beyond)",
+        "songid": 1345018,
+        "singer": [
+          {
+            "name": "Fort Minor"
+          },
+          {
+            "name": "Styles of Beyond"
+          }
+        ],
+        "albumname": "The Rising Tied",
+        "albumid": 138351,
+        "duration": 230493,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "I Need A Doctor",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Eminem",
+        "Skylar Grey"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "I Need a Doctor",
+        "songid": 2416737,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Skylar Grey"
+          }
+        ],
+        "albumname": "I Need a Doctor",
+        "albumid": 243867,
+        "duration": 283771,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Yeah",
+      "artist": "Usher",
+      "artists": [
+        "Usher",
+        "Lil Jon",
+        "Ludacris"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Yeah (Live)",
+        "songid": 27078659,
+        "singer": [
+          {
+            "name": "Usher"
+          }
+        ],
+        "albumname": "OMG Tour Live From London",
+        "albumid": 2581910,
+        "duration": 175175,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Lucky You",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Joyner Lucas"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lucky You",
+        "songid": 1306386506,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Joyner Lucas"
+          }
+        ],
+        "albumname": "Kamikaze",
+        "albumid": 72786608,
+        "duration": 244679,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "On GOD",
+      "artist": "Mustard",
+      "artists": [
+        "Mustard",
+        "YG",
+        "Tyga",
+        "A$AP Ferg",
+        "A$AP Rocky"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "On GOD",
+        "songid": 1373321434,
+        "singer": [
+          {
+            "name": "Mustard"
+          },
+          {
+            "name": "A$AP Ferg"
+          },
+          {
+            "name": "YG"
+          },
+          {
+            "name": "A$AP Rocky"
+          },
+          {
+            "name": "Tyga"
+          }
+        ],
+        "albumname": "Perfect Ten",
+        "albumid": 80066261,
+        "duration": 263126,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Straight Outta Compton",
+      "artist": "N.W.A.",
+      "artists": [
+        "N.W.A."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Straight Outta Compton",
+        "songid": 20189494,
+        "singer": [
+          {
+            "name": "N.W.A"
+          }
+        ],
+        "albumname": "Straight Outta Compton",
+        "albumid": 1872168,
+        "duration": 256940,
+        "match_score": 7
+      }
+    },
+    {
+      "name": "Bitch Please II",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Dr. Dre",
+        "Snoop Dogg",
+        "Xzibit",
+        "Nate Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Bitch Please II",
+        "songid": 17572434,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Xzibit"
+          },
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Nate Dogg"
+          },
+          {
+            "name": "Snoop Dogg"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP",
+        "albumid": 1618499,
+        "duration": 288266,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "It Was A Good Day",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "It Was A Good Day",
+        "songid": 18353530,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "The Predator (World) (Clean)",
+        "albumid": 1685549,
+        "duration": 261363,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "The Watcher",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Eminem",
+        "Knoc 'Turn 'Al"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "The Watcher",
+        "songid": 17405585,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Knoc-Turn'al"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 206560,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Shake That Ass (feat. Nate Dogg)",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Nate Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Shake That Ass",
+        "songid": 1874885183,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Nate Dogg"
+          }
+        ],
+        "albumname": "Watch Me Hop",
+        "albumid": 132679019,
+        "duration": 247906,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Walk Man",
+      "artist": "Tiny Meat Gang",
+      "artists": [
+        "Tiny Meat Gang"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Walk Man",
+        "songid": 1394765388,
+        "singer": [
+          {
+            "name": "Tiny Meat Gang"
+          }
+        ],
+        "albumname": "Walk Man",
+        "albumid": 82124786,
+        "duration": 165999,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Some L.A. Niggaz",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Hittman",
+        "Ms. Roq",
+        "Knoc-Turn'al",
+        "Time Bomb",
+        "Koka Kambon",
+        "Defari",
+        "MC Ren",
+        "Xzibit"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Some L.A. Niggaz",
+        "songid": 17405600,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Xzibit"
+          },
+          {
+            "name": "Defari"
+          },
+          {
+            "name": "Hittman"
+          },
+          {
+            "name": "Knoc-Turn'al"
+          },
+          {
+            "name": "Koka Kambon"
+          },
+          {
+            "name": "MC Ren"
+          },
+          {
+            "name": "Ms. Roq"
+          },
+          {
+            "name": "Time Bomb"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 265226,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "What's The Difference",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Eminem",
+        "Xzibit"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "What's The Difference",
+        "songid": 17405590,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Xzibit"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 244240,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Rap God",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Rap God",
+        "songid": 27853227,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Rap God",
+        "albumid": 2685152,
+        "duration": 363000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Love The Way You Lie",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Rihanna"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Love The Way You Lie",
+        "songid": 1297841,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Rihanna"
+          }
+        ],
+        "albumname": "Life After Recovery",
+        "albumid": 133862,
+        "duration": 263373,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Your Money Or Your Life",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Your Money Or Your Life",
+        "songid": 1460614,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "I Am the West",
+        "albumid": 149592,
+        "duration": 203706,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Stan",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Dido"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Stan",
+        "songid": 17572422,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Dido"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP",
+        "albumid": 1618499,
+        "duration": 404066,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "One Man Can Change The World",
+      "artist": "Big Sean",
+      "artists": [
+        "Big Sean",
+        "Ye (侃爷)",
+        "John Legend"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "One Man Can Change The World",
+        "songid": 30621902,
+        "singer": [
+          {
+            "name": "Big Sean"
+          },
+          {
+            "name": "Kanye West"
+          },
+          {
+            "name": "John Legend"
+          }
+        ],
+        "albumname": "Dark Sky Paradise (Deluxe)",
+        "albumid": 3098945,
+        "duration": 254000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Say What You Say",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Dr. Dre"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Say What You Say",
+        "songid": 17572310,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Dr. Dre"
+          }
+        ],
+        "albumname": "The Eminem Show",
+        "albumid": 1618493,
+        "duration": 309893,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Sing For The Moment",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Sing For The Moment",
+        "songid": 1299919,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Sing For The Moment",
+        "albumid": 133998,
+        "duration": 339546,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "We Own It (Fast & Furious)",
+      "artist": "2 Chainz",
+      "artists": [
+        "2 Chainz",
+        "Wiz Khalifa"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "We Own It (feat. Wiz Khalifa)",
+        "songid": 26368846,
+        "singer": [
+          {
+            "name": "2 Chainz"
+          }
+        ],
+        "albumname": "We Own It (Single)",
+        "albumid": 2467872,
+        "duration": 227893,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Do Ya Thang",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Do Ya Thang",
+        "songid": 1460766,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          }
+        ],
+        "albumname": "Raw Footage",
+        "albumid": 149606,
+        "duration": 244080,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Mockingbird",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Mockingbird",
+        "songid": 17572558,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Mockingbird",
+        "albumid": 1618530,
+        "duration": 250760,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "No Limit",
+      "artist": "G-Eazy",
+      "artists": [
+        "G-Eazy",
+        "A$AP Rocky",
+        "Cardi B"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "No Limit",
+        "songid": 504425722,
+        "singer": [
+          {
+            "name": "G-Eazy"
+          },
+          {
+            "name": "A$AP Rocky"
+          },
+          {
+            "name": "Cardi B"
+          }
+        ],
+        "albumname": "No Limit",
+        "albumid": 36128431,
+        "duration": 212532,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Me, Myself & I",
+      "artist": "G-Eazy",
+      "artists": [
+        "G-Eazy",
+        "Bebe Rexha"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Me, Myself & I",
+        "songid": 35447075,
+        "singer": [
+          {
+            "name": "G-Eazy"
+          },
+          {
+            "name": "Bebe Rexha"
+          }
+        ],
+        "albumname": "Me, Myself & I",
+        "albumid": 3331021,
+        "duration": 251518,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Until We Rich",
+      "artist": "Ice Cube",
+      "artists": [
+        "Ice Cube",
+        "Krayzie Bone"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Until We Rich",
+        "songid": 18353643,
+        "singer": [
+          {
+            "name": "Ice Cube"
+          },
+          {
+            "name": "Krayzie Bone"
+          }
+        ],
+        "albumname": "War & Peace Vol. 2 (The Peace Disc)",
+        "albumid": 1685555,
+        "duration": 254706,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Patiently Waiting",
+      "artist": "50 Cent",
+      "artists": [
+        "50 Cent"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Patiently Waiting",
+        "songid": 16158560,
+        "singer": [
+          {
+            "name": "50 Cent"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Get Rich Or Die Tryin",
+        "albumid": 1490850,
+        "duration": 288949,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "P.I.M.P.",
+      "artist": "50 Cent",
+      "artists": [
+        "50 Cent"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "P.I.M.P.",
+        "songid": 16158582,
+        "singer": [
+          {
+            "name": "50 Cent"
+          }
+        ],
+        "albumname": "P.I.M.P.",
+        "albumid": 1490852,
+        "duration": 251680,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "In Da Club",
+      "artist": "50 Cent",
+      "artists": [
+        "50 Cent"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "In Da Club",
+        "songid": 16158605,
+        "singer": [
+          {
+            "name": "50 Cent"
+          }
+        ],
+        "albumname": "In Da Club",
+        "albumid": 1490862,
+        "duration": 193466,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "My Name Is",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "My Name Is",
+        "songid": 17572251,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Slim Shady LP",
+        "albumid": 1618491,
+        "duration": 268400,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Can't Hold Us",
+      "artist": "Macklemore",
+      "artists": [
+        "Macklemore",
+        "Ryan Lewis",
+        "Ray Dalton"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Can't Hold Us",
+        "songid": 25677983,
+        "singer": [
+          {
+            "name": "Macklemore & Ryan Lewis"
+          },
+          {
+            "name": "Ray Dalton"
+          }
+        ],
+        "albumname": "The Heist",
+        "albumid": 2273235,
+        "duration": 258431,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Numb / Encore",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Linkin Park"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Numb / Encore",
+        "songid": 4153184,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Linkin Park"
+          }
+        ],
+        "albumname": "Collision Course",
+        "albumid": 419852,
+        "duration": 205280,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Notorious Thugs",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G.",
+        "Bone Thugs N Harmony"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Notorious Thugs (2008 Remaster)",
+        "songid": 2003591,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          },
+          {
+            "name": "Bone Thugs-N-Harmony"
+          }
+        ],
+        "albumname": "NOTORIOUS Music From and Inspired by the Original Motion Picture",
+        "albumid": 201955,
+        "duration": 365612,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Empire State of Mind",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Alicia Keys"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Empire State Of Mind",
+        "songid": 18614153,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Alicia Keys"
+          }
+        ],
+        "albumname": "The Hits Collection Volume One [International Version (Explicit)]",
+        "albumid": 1707459,
+        "duration": 277106,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Renegade",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Renegade",
+        "songid": 1475543,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Blueprint",
+        "albumid": 150967,
+        "duration": 337760,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Perfect",
+      "artist": "Logic",
+      "artists": [
+        "Logic",
+        "Lil Wayne",
+        "A$AP Ferg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Perfect (Remix)",
+        "songid": 1880788449,
+        "singer": [
+          {
+            "name": "Logic"
+          },
+          {
+            "name": "Lil Wayne"
+          },
+          {
+            "name": "A$AP Ferg"
+          }
+        ],
+        "albumname": "Perfect (Remix)",
+        "albumid": 133710897,
+        "duration": 171690,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Remember The Name (feat. Eminem & 50 Cent)",
+      "artist": "Ed Sheeran",
+      "artists": [
+        "Ed Sheeran",
+        "Eminem",
+        "50 Cent"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Remember The Name (feat. Eminem & 50 Cent)",
+        "songid": 1377164132,
+        "singer": [
+          {
+            "name": "Ed Sheeran"
+          },
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "50 Cent"
+          }
+        ],
+        "albumname": "No.6 Collaborations Project",
+        "albumid": 80316851,
+        "duration": 207760,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Greatest",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Greatest",
+        "songid": 1306386505,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Kamikaze",
+        "albumid": 72786608,
+        "duration": 226937,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Ramen & OJ",
+      "artist": "Joyner Lucas",
+      "artists": [
+        "Joyner Lucas",
+        "Lil Baby"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Ramen & OJ",
+        "songid": 1837958697,
+        "singer": [
+          {
+            "name": "Joyner Lucas"
+          },
+          {
+            "name": "Lil Baby"
+          }
+        ],
+        "albumname": "Ramen & OJ",
+        "albumid": 126122971,
+        "duration": 218447,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Welcome 2 Detroit",
+      "artist": "Trick Trick",
+      "artists": [
+        "Trick Trick",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Welcome 2 Detroit",
+        "songid": 19279266,
+        "singer": [
+          {
+            "name": "Trick Trick"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The People Vs.",
+        "albumid": 1769022,
+        "duration": 288000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Detroit Vs. Everybody",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Royce da 5'9\"",
+        "Big Sean",
+        "Danny Brown",
+        "Dej Loaf",
+        "Trick Trick"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Detroit vs. Everybody",
+        "songid": 29737452,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Royce Da 5'9\""
+          },
+          {
+            "name": "Big Sean"
+          },
+          {
+            "name": "Danny Brown"
+          },
+          {
+            "name": "Dej Loaf"
+          },
+          {
+            "name": "Trick Trick"
+          }
+        ],
+        "albumname": "SHADYXV",
+        "albumid": 3056572,
+        "duration": 357000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Fast Lane",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Royce da 5'9\""
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Fast Lane",
+        "songid": 1939989,
+        "singer": [
+          {
+            "name": "Royce da 5'9"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "NBA 2K12 Soundtrack",
+        "albumid": 195431,
+        "duration": 249680,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "White America",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "White America",
+        "songid": 17572295,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Eminem Show",
+        "albumid": 1618493,
+        "duration": 324546,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "99 Problems",
+      "artist": "Jay-Z",
+      "artists": [
+        "Jay-Z"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "99 Problems",
+        "songid": 18614115,
+        "singer": [
+          {
+            "name": "JAY-Z"
+          }
+        ],
+        "albumname": "99 Problems / Dirt Off Your Shoulder",
+        "albumid": 1707446,
+        "duration": 234866,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "The Real Slim Shady",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "The Real Slim Shady",
+        "songid": 17572427,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Marshall Mathers LP",
+        "albumid": 1618499,
+        "duration": 284533,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Monster",
+      "artist": "Ye (侃爷)",
+      "artists": [
+        "Ye (侃爷)",
+        "Jay-Z",
+        "Rick Ross",
+        "Nicki Minaj",
+        "Bon Iver"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Monster",
+        "songid": 18969207,
+        "singer": [
+          {
+            "name": "Kanye West"
+          },
+          {
+            "name": "Bon Iver"
+          },
+          {
+            "name": "JAY-Z"
+          },
+          {
+            "name": "Nicki Minaj"
+          },
+          {
+            "name": "Rick Ross"
+          }
+        ],
+        "albumname": "My Beautiful Dark Twisted Fantasy",
+        "albumid": 1738270,
+        "duration": 378893,
+        "match_score": 5
+      }
+    },
+    {
+      "name": "Lane Switcha (feat. A$AP Rocky, Juicy J & Project Pat)",
+      "artist": "Skepta",
+      "artists": [
+        "Skepta",
+        "Pop Smoke",
+        "A$AP Rocky",
+        "Juicy J",
+        "Project Pat"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lane Switcha (feat. A$AP Rocky, Juicy J & Project Pat)",
+        "songid": 1853632723,
+        "singer": [
+          {
+            "name": "Skepta"
+          },
+          {
+            "name": "Pop Smoke"
+          },
+          {
+            "name": "A$AP Rocky"
+          },
+          {
+            "name": "Juicy J"
+          },
+          {
+            "name": "Project Pat"
+          }
+        ],
+        "albumname": "速度与激情9 电影原声带: Fast & Furious 9: The Fast Saga (Original Motion Picture Soundtrack)",
+        "albumid": 129083144,
+        "duration": 168727,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "When I'm Gone",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "When I'm Gone",
+        "songid": 17572553,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "When I'm Gone",
+        "albumid": 1618527,
+        "duration": 282000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Say Goodbye Hollywood",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Say Goodbye Hollywood",
+        "songid": 17572301,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "The Eminem Show",
+        "albumid": 1618493,
+        "duration": 272840,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Young, Wild & Free",
+      "artist": "Snoop Dogg",
+      "artists": [
+        "Snoop Dogg",
+        "Wiz Khalifa",
+        "Bruno Mars"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Young, Wild & Free",
+        "songid": 1934807,
+        "singer": [
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Wiz Khalifa"
+          },
+          {
+            "name": "Bruno Mars"
+          }
+        ],
+        "albumname": "Young, Wild & Free",
+        "albumid": 195054,
+        "duration": 207333,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Thrift Shop(feat. Wanz)",
+      "artist": "Macklemore",
+      "artists": [
+        "Macklemore",
+        "Ryan Lewis",
+        "Wanz"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Thrift Shop (Feat. Wanz)",
+        "songid": 26490898,
+        "singer": [
+          {
+            "name": "Macklemore & Ryan Lewis"
+          }
+        ],
+        "albumname": "Fun Radio Funlist 2013 Vol.2",
+        "albumid": 2506850,
+        "duration": 236000,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Lighters",
+      "artist": "Bruno Mars",
+      "artists": [
+        "Bruno Mars",
+        "Royce da 5'9\"",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lighters",
+        "songid": 1969730168,
+        "singer": [
+          {
+            "name": "Bad Meets Evil"
+          },
+          {
+            "name": "Bruno Mars"
+          }
+        ],
+        "albumname": "Curtain Call 2",
+        "albumid": 149224802,
+        "duration": 303800,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Venom",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Venom (Music From The Motion Picture)",
+        "songid": 1311535712,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Venom (Music From The Motion Picture)",
+        "albumid": 73496717,
+        "duration": 269554,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Not Afraid",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Not Afraid",
+        "songid": 1297699,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Recovery (Deluxe Edition)",
+        "albumid": 133852,
+        "duration": 248133,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Stepping Stone",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Stepping Stone",
+        "songid": 1306385776,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "Kamikaze",
+        "albumid": 72786608,
+        "duration": 309637,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Marmalade",
+      "artist": "Macklemore",
+      "artists": [
+        "Macklemore",
+        "Lil Yachty"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Marmalade",
+        "songid": 1315533700,
+        "singer": [
+          {
+            "name": "Macklemore"
+          },
+          {
+            "name": "Lil Yachty"
+          }
+        ],
+        "albumname": "GEMINI",
+        "albumid": 73786226,
+        "duration": 261614,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Life Goes On",
+      "artist": "2Pac",
+      "artists": [
+        "2Pac"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Life Goes On",
+        "songid": 1312062089,
+        "singer": [
+          {
+            "name": "2Pac"
+          }
+        ],
+        "albumname": "All Eyez On Me",
+        "albumid": 73554727,
+        "duration": 301635,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Still D.R.E.",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Snoop Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Still D.R.E.",
+        "songid": 17405587,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Snoop Dogg"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 270651,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Plain Jane",
+      "artist": "A$AP Ferg",
+      "artists": [
+        "A$AP Ferg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Plain Jane (Remix)",
+        "songid": 1463774251,
+        "singer": [
+          {
+            "name": "A$AP Ferg"
+          },
+          {
+            "name": "Nicki Minaj"
+          }
+        ],
+        "albumname": "Plain Jane (Remix)",
+        "albumid": 92636462,
+        "duration": 202686,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Juicy",
+      "artist": "The Notorious B.I.G.",
+      "artists": [
+        "The Notorious B.I.G."
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Juicy",
+        "songid": 1315168334,
+        "singer": [
+          {
+            "name": "The Notorious B.I.G."
+          }
+        ],
+        "albumname": "Greatest Hits",
+        "albumid": 73768257,
+        "duration": 285760,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Old Town Road",
+      "artist": "Lil Nas X",
+      "artists": [
+        "Lil Nas X"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Old Town Road (Remix)",
+        "songid": 1373172789,
+        "singer": [
+          {
+            "name": "Lil Nas X"
+          },
+          {
+            "name": "Billy Ray Cyrus"
+          }
+        ],
+        "albumname": "7 EP",
+        "albumid": 79920302,
+        "duration": 156502,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Lalala",
+      "artist": "Y2K",
+      "artists": [
+        "Y2K",
+        "bbno$"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lalala",
+        "songid": 1373835581,
+        "singer": [
+          {
+            "name": "Y2K"
+          },
+          {
+            "name": "bbno$"
+          }
+        ],
+        "albumname": "Lalala",
+        "albumid": 79980767,
+        "duration": 160615,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Godzilla",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Juice WRLD"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Godzilla",
+        "songid": 1417093533,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Juice WRLD"
+          }
+        ],
+        "albumname": "Music To Be Murdered By",
+        "albumid": 85023223,
+        "duration": 210800,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "My Name",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem",
+        "Xzibit",
+        "Nate Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "My Name (from Xzibits Man Vs Machine)",
+        "songid": 1299682,
+        "singer": [
+          {
+            "name": "Eminem"
+          },
+          {
+            "name": "Xzibit"
+          },
+          {
+            "name": "Nate Dogg"
+          }
+        ],
+        "albumname": "E",
+        "albumid": 133983,
+        "duration": 272506,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Forgot About Dre",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Forgot About Dre",
+        "songid": 17405593,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 222333,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "The Next Episode",
+      "artist": "Dr. Dre",
+      "artists": [
+        "Dr. Dre",
+        "Snoop Dogg"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "The Next Episode",
+        "songid": 17405594,
+        "singer": [
+          {
+            "name": "Dr. Dre"
+          },
+          {
+            "name": "Snoop Dogg"
+          },
+          {
+            "name": "Nate Dogg"
+          }
+        ],
+        "albumname": "2001",
+        "albumid": 1603658,
+        "duration": 162506,
+        "match_score": 9
+      }
+    },
+    {
+      "name": "Lose Yourself",
+      "artist": "Eminem",
+      "artists": [
+        "Eminem"
+      ],
+      "album": "",
+      "ncm": {
+        "songname": "Lose Yourself",
+        "songid": 5052317,
+        "singer": [
+          {
+            "name": "Eminem"
+          }
+        ],
+        "albumname": "8 Mile",
+        "albumid": 501243,
+        "duration": 320293,
+        "match_score": 9
+      }
+    }
+  ]
+}

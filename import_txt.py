@@ -7,6 +7,9 @@ Usage: python import_txt.py  (requires ncm-api Docker running)
 import json, os, re, sys, time
 import requests
 
+# Work around Windows GBK encoding
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 HOME = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HOME, "data")
 NCM = "http://localhost:3000"
@@ -118,7 +121,7 @@ def import_txt(txt_path, label):
     for i, song in enumerate(songs):
         name_short = song["name"][:30]
         artist_short = song["artist"][:20]
-        print(f"  [{i+1}/{len(songs)}] {name_short} — {artist_short}", end=" ")
+        print(f"  [{i+1}/{len(songs)}] {name_short} | {artist_short}", end=" ")
         match = search_ncm(song)
         if match:
             print(f"-> {match['songname'][:30]}")

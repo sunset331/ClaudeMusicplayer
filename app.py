@@ -19,6 +19,9 @@ from datetime import datetime
 
 import requests
 
+import chat
+import engine as eng
+
 HOME = os.path.dirname(os.path.abspath(__file__))
 NCM = "http://localhost:3000"
 DATA_DIR = os.path.join(HOME, "data")
@@ -79,16 +82,19 @@ class MusicPlayer:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Claude Music - Daily Picks")
-        self.root.geometry("960x680")
-        self.root.minsize(800, 500)
+        self.root.geometry("1100x680")
+        self.root.minsize(900, 500)
         self.root.configure(bg=BG_MAIN)
 
         self.songs = []
         self.idx = 0
         self.mode = "rap"
-        self.ffplay = None          # current ffplay process
+        self.ffplay = None
         self.mascot = None
         self.playlist_id = None
+        self.candidates = []
+        self.play_count = 0
+        self._simi_queue = []
 
         self._build()
         self.root.after(100, self._init_data)
@@ -102,16 +108,21 @@ class MusicPlayer:
     # ============================================================
 
     def _build(self):
+        """Three-column layout: song list | now playing | chat."""
         pw = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, bg=BG_MAIN, sashwidth=2)
         pw.pack(fill=tk.BOTH, expand=True)
 
-        self.left = tk.Frame(pw, bg=BG_SIDEBAR)
+        self.left = tk.Frame(pw, bg=BG_SIDEBAR, width=360)
         pw.add(self.left, stretch="always")
         self._build_list()
 
-        self.right = tk.Frame(pw, bg=BG_MAIN)
-        pw.add(self.right, stretch="always")
+        self.center = tk.Frame(pw, bg=BG_MAIN, width=300)
+        pw.add(self.center, stretch="always")
         self._build_detail()
+
+        self.right = tk.Frame(pw, bg=BG_SIDEBAR, width=260)
+        pw.add(self.right, stretch="always")
+        self._build_chat_panel()
 
         self._build_bar()
 
@@ -157,34 +168,35 @@ class MusicPlayer:
         self.tree.bind("<Return>", self._dbl)
 
     def _build_detail(self):
-        tk.Label(self.right, text="NOW PLAYING", font=("Microsoft YaHei", 8, "bold"),
+        """Center column: now playing + controls."""
+        tk.Label(self.center, text="NOW PLAYING", font=("Microsoft YaHei", 8, "bold"),
                  fg=FG_ACC, bg=BG_MAIN).pack(pady=(20, 5))
 
-        af = tk.Frame(self.right, bg=BG_MAIN, width=220, height=220)
+        af = tk.Frame(self.center, bg=BG_MAIN, width=220, height=220)
         af.pack(pady=(0, 10), padx=20)
         af.pack_propagate(False)
         self.ac = tk.Canvas(af, width=210, height=210, bg=BG_SIDEBAR, highlightthickness=0)
         self.ac.pack(fill=tk.BOTH, expand=True)
         self.ac.create_text(105, 105, text="♪", font=("Microsoft YaHei", 36), fill=FG2)
 
-        self.name_lbl = tk.Label(self.right, text="Not playing",
+        self.name_lbl = tk.Label(self.center, text="Not playing",
                                  font=("Microsoft YaHei", 12, "bold"),
-                                 fg=FG, bg=BG_MAIN, wraplength=340, justify=tk.CENTER)
+                                 fg=FG, bg=BG_MAIN, wraplength=280, justify=tk.CENTER)
         self.name_lbl.pack(pady=(5, 2))
-        self.art_lbl = tk.Label(self.right, text="", font=("Microsoft YaHei", 10),
+        self.art_lbl = tk.Label(self.center, text="", font=("Microsoft YaHei", 10),
                                 fg=FG2, bg=BG_MAIN)
         self.art_lbl.pack(pady=(0, 5))
 
         # Progress bar
         self.pvar = tk.DoubleVar(value=0)
-        self.pbar = ttk.Progressbar(self.right, variable=self.pvar, length=280)
+        self.pbar = ttk.Progressbar(self.center, variable=self.pvar, length=260)
         self.pbar.pack(pady=(5, 2))
-        self.time_lbl = tk.Label(self.right, text="", font=("Microsoft YaHei", 8),
+        self.time_lbl = tk.Label(self.center, text="", font=("Microsoft YaHei", 8),
                                  fg=FG2, bg=BG_MAIN)
         self.time_lbl.pack(pady=(0, 8))
 
         # Controls
-        cf = tk.Frame(self.right, bg=BG_MAIN)
+        cf = tk.Frame(self.center, bg=BG_MAIN)
         cf.pack(pady=5)
         bc = {"font": ("Segoe UI Symbol", 14), "bg": BG_LIST, "fg": FG,
               "activebackground": BG_SEL, "activeforeground": "#fff",
@@ -196,7 +208,7 @@ class MusicPlayer:
         tk.Button(cf, text=">|", command=self._next, **bc).pack(side=tk.LEFT, padx=3)
 
         # Rating
-        rf = tk.Frame(self.right, bg=BG_MAIN)
+        rf = tk.Frame(self.center, bg=BG_MAIN)
         rf.pack(pady=10)
         rs = {"font": ("Microsoft YaHei", 9, "bold"), "relief": tk.FLAT,
               "cursor": "hand2", "padx": 15, "pady": 6}
@@ -211,19 +223,15 @@ class MusicPlayer:
         self.skip_btn.pack(side=tk.LEFT, padx=5)
 
         # Playlist
-        self.pl_btn = tk.Button(self.right, text="+ Add to Playlist",
+        self.pl_btn = tk.Button(self.center, text="+ Add to Playlist",
                                 font=("Microsoft YaHei", 9), bg=BG_LIST, fg=FG,
                                 activebackground="#2d5a3d", activeforeground="#fff",
                                 relief=tk.FLAT, cursor="hand2", padx=15, pady=6,
                                 command=self._add_pl)
         self.pl_btn.pack(pady=10)
 
-        self.login_lbl = tk.Label(self.right, text="", font=("Microsoft YaHei", 8),
-                                  fg=FG2, bg=BG_MAIN)
-        self.login_lbl.pack(pady=(0, 8))
-
-        inf = tk.Frame(self.right, bg=BG_MAIN)
-        inf.pack(pady=5, fill=tk.X, padx=30)
+        inf = tk.Frame(self.center, bg=BG_MAIN)
+        inf.pack(pady=5, fill=tk.X, padx=20)
         self.il = {}
         for i, (lb, k) in enumerate([("Album:", "al"), ("Source:", "src"), ("Match:", "sc")]):
             tk.Label(inf, text=lb, font=("Microsoft YaHei", 9), fg=FG2, bg=BG_MAIN).grid(
@@ -231,6 +239,50 @@ class MusicPlayer:
             v = tk.Label(inf, text="-", font=("Microsoft YaHei", 9, "bold"), fg=FG, bg=BG_MAIN)
             v.grid(row=i, column=1, sticky=tk.W, pady=2, padx=(10, 0))
             self.il[k] = v
+
+    def _build_chat_panel(self):
+        """Right column: AI chat panel."""
+        tk.Label(self.right, text="CHAT", font=("Microsoft YaHei", 8, "bold"),
+                 fg=FG_ACC, bg=BG_SIDEBAR).pack(pady=(20, 5), padx=10, anchor=tk.W)
+
+        self.chat_display = tk.Text(self.right, bg=BG_MAIN, fg=FG, wrap=tk.WORD,
+                                     font=("Microsoft YaHei", 9), state=tk.DISABLED,
+                                     height=20, borderwidth=0, padx=8, pady=8,
+                                     relief=tk.FLAT)
+        self.chat_display.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 5))
+
+        # Chat text tags
+        self.chat_display.tag_configure("claude_label", font=("Microsoft YaHei", 9, "bold"),
+                                        foreground=FG_OK)
+        self.chat_display.tag_configure("user_label", font=("Microsoft YaHei", 9, "bold"),
+                                        foreground=FG_ACC)
+        self.chat_display.tag_configure("claude", font=("Microsoft YaHei", 9),
+                                        foreground=FG, lmargin1=10, lmargin2=10)
+        self.chat_display.tag_configure("user", font=("Microsoft YaHei", 9),
+                                        foreground=FG2, lmargin1=10, lmargin2=10)
+
+        # Input area
+        input_frame = tk.Frame(self.right, bg=BG_SIDEBAR)
+        input_frame.pack(fill=tk.X, padx=8, pady=(0, 15))
+
+        self.chat_input = tk.Text(input_frame, bg=BG_LIST, fg=FG,
+                                   font=("Microsoft YaHei", 9), wrap=tk.WORD,
+                                   height=3, borderwidth=0, padx=6, pady=4,
+                                   relief=tk.FLAT, insertbackground=FG)
+        self.chat_input.pack(fill=tk.X, side=tk.LEFT, expand=True)
+        self.chat_input.bind("<Return>", self._chat_send)
+        self.chat_input.bind("<Shift-Return>", lambda e: self.chat_input.insert(tk.INSERT, "\n"))
+
+        tk.Button(input_frame, text="Send", font=("Microsoft YaHei", 9, "bold"),
+                  bg=BG_SEL, fg="#fff", activebackground=FG_ACC, activeforeground="#fff",
+                  relief=tk.FLAT, cursor="hand2", padx=10, pady=4,
+                  command=self._chat_send).pack(side=tk.RIGHT, padx=(4, 0))
+
+        self.login_lbl = tk.Label(self.right, text="", font=("Microsoft YaHei", 8),
+                                  fg=FG2, bg=BG_SIDEBAR)
+        self.login_lbl.pack(pady=(0, 8))
+
+        self._chat_append("Claude", "Hey! I'm listening with you. How does this song feel?")
 
     def _build_bar(self):
         bar = tk.Frame(self.root, bg=BG_SIDEBAR, height=32)
@@ -254,54 +306,137 @@ class MusicPlayer:
                                fg=FG2, bg=BG_SIDEBAR)
         self.st_lbl.pack(side=tk.RIGHT, padx=15, pady=2)
 
+    def _chat_append(self, sender, text):
+        """Append a message to the chat display."""
+        self.chat_display.config(state=tk.NORMAL)
+        tag_prefix = "user" if sender == "You" else "claude"
+        self.chat_display.insert(tk.END, f"{sender}: ", (f"{tag_prefix}_label",))
+        self.chat_display.insert(tk.END, f"{text}\n\n", (tag_prefix,))
+        self.chat_display.config(state=tk.DISABLED)
+        self.chat_display.see(tk.END)
+
+    def _chat_send(self, event=None):
+        """Handle chat input submission."""
+        text = self.chat_input.get("1.0", "end-1c").strip()
+        if not text:
+            return "break"
+        self.chat_input.delete("1.0", tk.END)
+        self._chat_append("You", text)
+
+        song = self.songs[self.idx] if self.songs and self.idx < len(self.songs) else {}
+
+        def _r():
+            try:
+                reply, signals = chat.send_message(
+                    text, song,
+                    getattr(self, "_chat_history", []))
+                if not hasattr(self, "_chat_history"):
+                    self._chat_history = []
+                self._chat_history.append({"role": "user", "content": text})
+                self._chat_history.append({"role": "assistant", "content": reply})
+                self._chat_history = self._chat_history[-20:]
+
+                self.root.after(0, lambda: self._chat_append("Claude", reply))
+                if signals:
+                    self._apply_chat_signals(signals)
+            except Exception as e:
+                self.root.after(0, lambda e=str(e):
+                    self._chat_append("Claude", "Sorry, my brain lagged. What were you saying?"))
+        threading.Thread(target=_r, daemon=True).start()
+        return "break"
+
+    def _apply_chat_signals(self, signals):
+        """Store chat signals in history.json and trigger rescore."""
+        h = {}
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, encoding="utf-8") as f:
+                h = json.load(f)
+        if "chat_signals" not in h:
+            h["chat_signals"] = []
+        h["chat_signals"].extend(signals)
+        h["chat_signals"] = h["chat_signals"][-50:]
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(h, f, ensure_ascii=False, indent=2)
+        self._trigger_rescore()
+
     # ============================================================
     # DATA
     # ============================================================
 
     def _init_data(self):
+        """Initialize data: build candidates or load from cache."""
         today = datetime.now().strftime("%Y-%m-%d")
-        need = False
-        for fn in [TODAY_FILE, TODAY_FOCUS_FILE]:
-            if os.path.exists(fn):
-                try:
-                    with open(fn, encoding="utf-8") as f:
-                        if json.load(f).get("date") != today:
-                            need = True
-                except Exception:
-                    need = True
-            else:
-                need = True
-        if need:
-            self._status("Generating picks...")
-            def _r():
-                subprocess.run([sys.executable, os.path.join(HOME, "engine.py"), "--mode", "both"],
-                               cwd=HOME, capture_output=True, timeout=180)
-                self.root.after(0, self._load)
-            threading.Thread(target=_r, daemon=True).start()
-        else:
-            self._load()
-
-    def _load(self):
-        fn = TODAY_FILE if self.mode == "rap" else TODAY_FOCUS_FILE
-        lb = "Rap/Vibe" if self.mode == "rap" else "Focus/Chill"
-        if not os.path.exists(fn):
-            self._status(f"No {lb} data")
+        cached = eng.load_candidates(self.mode)
+        if cached and cached.get("built_at", "")[:10] == today and cached.get("songs"):
+            self.candidates = cached["songs"]
+            self._status(f"Loaded {len(self.candidates)} cached candidates")
+            self._reload_list()
             return
-        with open(fn, encoding="utf-8") as f:
-            data = json.load(f)
-        self.songs = data.get("songs", [])
+
+        self._status("Building candidate pool...")
+        def _r():
+            try:
+                self.candidates = eng.build_candidates(self.mode)
+                self.candidates = eng.score_candidates(self.candidates, self.mode)
+                self.root.after(0, self._reload_list)
+            except Exception as e:
+                self.root.after(0, lambda e=str(e): self._status(f"Build failed: {e[:50]}"))
+        threading.Thread(target=_r, daemon=True).start()
+
+    def _reload_list(self):
+        """Refresh treeview from candidates (sorted by _score, unplayed only)."""
+        unplayed = [s for s in self.candidates if not s.get("_played", False)]
+        if not unplayed:
+            unplayed = self.candidates
+        self.songs = unplayed
         self.tree.delete(*self.tree.get_children())
-        for s in self.songs:
+        for i, s in enumerate(unplayed):
             singers = " / ".join(x.get("name", "") for x in s.get("singer", []))
             self.tree.insert("", tk.END,
-                             values=(s.get("rank", ""), s.get("songname", ""),
-                                     singers, f"{s.get('score', 0):.2f}"))
-        self.date_lbl.config(text=f"{lb} - {data.get('date', '?')}")
-        self.cnt_lbl.config(text=f"{len(self.songs)} songs")
-        self._status(f"{lb}: {len(self.songs)} songs")
-        if self.songs and not self._is_playing():
+                             values=(i + 1, s.get("songname", ""),
+                                     singers, f"{s.get('_score', 0):.2f}"))
+        mode_label = "Rap/Vibe" if self.mode == "rap" else "Mixed/Vibe"
+        self.date_lbl.config(text=f"{mode_label}")
+        self.cnt_lbl.config(text=f"{len(unplayed)} songs")
+        self._status(f"{mode_label}: {len(unplayed)} songs — {len(self.candidates)} in pool")
+        if unplayed and not self._is_playing():
             self.idx = 0
             self._play(0)
+
+    def _trigger_rescore(self):
+        """Rescore unplayed candidates in background thread."""
+        def _r():
+            try:
+                self.candidates = eng.rescore_unplayed(self.candidates, self.mode)
+                self.root.after(0, self._reload_list)
+            except Exception:
+                pass
+        threading.Thread(target=_r, daemon=True).start()
+
+    def _check_simi_expand(self):
+        """Track play count, trigger simi expansion every 10 songs."""
+        if not self.songs or self.idx >= len(self.songs):
+            return
+        self.play_count += 1
+        song = self.songs[self.idx]
+        self._simi_queue.append(song["songid"])
+        if len(self._simi_queue) > 10:
+            self._simi_queue = self._simi_queue[-10:]
+
+        if self.play_count > 0 and self.play_count % 10 == 0:
+            self._status("Expanding candidate pool (similar songs)...")
+            def _r():
+                try:
+                    new = eng.expand_from_simi(self._simi_queue, self.candidates, self.mode)
+                    if new:
+                        self.root.after(0, lambda: self._status(
+                            f"Added {len(new)} similar songs"))
+                        self.root.after(0, self._reload_list)
+                except Exception:
+                    pass
+            threading.Thread(target=_r, daemon=True).start()
+
+    # (_load replaced by _reload_list which reads from self.candidates)
 
     # ============================================================
     # PLAYBACK (ffplay)
@@ -352,6 +487,7 @@ class MusicPlayer:
             self.pp_btn.config(text="||")
             self._show_info(song)
             self._update_progress()
+            self.root.after(100, self._check_simi_expand)
         except Exception as err:
             self._status(f"Playback error: {err}")
 
@@ -429,23 +565,33 @@ class MusicPlayer:
         if self.idx >= len(self.songs):
             return
         song = self.songs[self.idx]
+        for c in self.candidates:
+            if c["songid"] == song["songid"]:
+                c["_played"] = True
+                break
         self._update_hist(song, "like")
         s = " / ".join(x.get("name", "") for x in song.get("singer", []))
         self._status(f"Liked! {s[:50]}")
         self.like_btn.config(bg=FG_OK, text="Liked!")
         self.root.after(800, lambda: self.like_btn.config(bg="#2d5a3d", text="Like"))
+        self._trigger_rescore()
         self.root.after(800, self._next)
 
     def _skip(self):
         if self.idx >= len(self.songs):
             return
         song = self.songs[self.idx]
+        for c in self.candidates:
+            if c["songid"] == song["songid"]:
+                c["_played"] = True
+                break
         self._update_hist(song, "skip")
         s = " / ".join(x.get("name", "") for x in song.get("singer", []))
         self._status(f"Skipped: {s[:50]}")
         self.skip_btn.config(bg=FG_ACC, text="Skipped!")
         self.root.after(800, lambda: self.skip_btn.config(bg="#5a2d2d", text="Skip"))
         self._stop_ffplay()
+        self._trigger_rescore()
         self.root.after(600, self._next)
 
     def _update_hist(self, song, action):
@@ -648,16 +794,25 @@ class MusicPlayer:
                 self._play(i)
 
     def _tgl_mode(self):
-        self.mode = "focus" if self.mode == "rap" else "rap"
-        self.mode_btn.config(text="Focus Mode" if self.mode == "focus" else "Rap Mode")
-        self._load()
+        self.mode = "mixed" if self.mode == "rap" else "rap"
+        self.mode_btn.config(text="Mixed Mode" if self.mode == "mixed" else "Rap Mode")
+        self._stop_ffplay()
+        self.play_count = 0
+        self._simi_queue = []
+        self._init_data()
 
     def _refresh(self):
-        self._status("Refreshing...")
+        self._status("Rebuilding candidate pool...")
+        self._stop_ffplay()
+        self.play_count = 0
+        self._simi_queue = []
         def _r():
-            subprocess.run([sys.executable, os.path.join(HOME, "engine.py"),
-                           "--mode", self.mode], cwd=HOME, capture_output=True, timeout=120)
-            self.root.after(0, self._load)
+            try:
+                self.candidates = eng.build_candidates(self.mode)
+                self.candidates = eng.score_candidates(self.candidates, self.mode)
+                self.root.after(0, self._reload_list)
+            except Exception as e:
+                self.root.after(0, lambda e=str(e): self._status(f"Refresh failed: {e[:50]}"))
         threading.Thread(target=_r, daemon=True).start()
 
     def _open_ne(self):

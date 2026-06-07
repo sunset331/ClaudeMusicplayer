@@ -31,6 +31,139 @@ MAX_PER_ARTIST = 3
 MIN_ARTISTS = 12
 
 # ============================================================
+# TASTE v2 — mode-partitioned format
+# ============================================================
+
+TASTE_V2_DEFAULT = {
+    "version": 2,
+    "modes": {
+        "rap": {
+            "seed_playlists": [],
+            "top_artists": [],
+            "artist_weights": {},
+            "genre_weights": {
+                "hip-hop": 0.6,
+                "rock": 0.15,
+                "chinese": 0.1,
+                "pop": 0.1,
+            },
+        },
+        "mixed": {
+            "seed_playlists": [],
+            "top_artists": [],
+            "artist_weights": {},
+            "genre_weights": {},
+        },
+    },
+    "claude_picks": {
+        "playlist_id": None,
+        "last_sync": None,
+        "songs": [],
+        "artist_counts": {},
+    },
+}
+
+
+def load_taste():
+    """Load taste profile, migrating from v1 if needed."""
+    if not os.path.exists(TASTE_FILE):
+        return dict(TASTE_V2_DEFAULT)  # shallow copy
+
+    with open(TASTE_FILE, "r", encoding="utf-8") as f:
+        t = json.load(f)
+
+    if t.get("version") == 2:
+        return t
+
+    # Migrate v1 -> v2
+    print("  [taste] Migrating from v1 to v2...")
+    top_artists = t.get("top_artists", [])
+    artist_weights = t.get("artist_weights", {})
+    genre_weights = t.get("genre_weights", {})
+
+    v2 = {
+        "version": 2,
+        "modes": {
+            "rap": {
+                "seed_playlists": [],
+                "top_artists": list(top_artists),
+                "artist_weights": dict(artist_weights),
+                "genre_weights": dict(genre_weights) if genre_weights else {
+                    "hip-hop": 0.6, "rock": 0.15, "chinese": 0.1, "pop": 0.1,
+                },
+            },
+            "mixed": {
+                "seed_playlists": [],
+                "top_artists": list(top_artists),
+                "artist_weights": dict(artist_weights),
+                "genre_weights": {},
+            },
+        },
+        "claude_picks": {
+            "playlist_id": None,
+            "last_sync": None,
+            "songs": [],
+            "artist_counts": {},
+        },
+    }
+    save_taste(v2)
+    return v2
+
+
+def save_taste(taste):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(TASTE_FILE, "w", encoding="utf-8") as f:
+        json.dump(taste, f, ensure_ascii=False, indent=2)
+
+
+def get_mode_taste(taste, mode):
+    """Get mode-specific taste sub-profile."""
+    return taste.get("modes", {}).get(mode, TASTE_V2_DEFAULT["modes"]["rap"])
+
+
+def ingest_qq_seed(taste, mode):
+    """
+    Read qq_seed_{mode}.json and merge into taste.modes[mode].
+    Updates top_artists ranking and artist_weights.
+    """
+    seed_file = os.path.join(DATA_DIR, f"qq_seed_{mode}.json")
+    if not os.path.exists(seed_file):
+        print(f"  [taste] No seed file for {mode}: {seed_file}")
+        return taste
+
+    with open(seed_file, "r", encoding="utf-8") as f:
+        seed = json.load(f)
+
+    mode_taste = taste.setdefault("modes", {}).setdefault(
+        mode, TASTE_V2_DEFAULT["modes"]["rap"])
+
+    seed_key = f"qq_seed_{mode}"
+    if seed_key not in mode_taste.get("seed_playlists", []):
+        mode_taste.setdefault("seed_playlists", []).append(seed_key)
+
+    artist_count = {}
+    for s in seed.get("songs", []):
+        ncm = s.get("ncm", {})
+        for singer in ncm.get("singer", []):
+            name = singer.get("name", "")
+            if name:
+                artist_count[name] = artist_count.get(name, 0) + 1
+
+    sorted_artists = sorted(artist_count.items(), key=lambda x: x[1], reverse=True)
+    mode_taste["top_artists"] = [a for a, _ in sorted_artists[:50]]
+
+    if sorted_artists:
+        max_count = sorted_artists[0][1]
+        for name, count in sorted_artists:
+            mode_taste.setdefault("artist_weights", {})[name] = round(
+                count / max_count * 0.8 + 0.1, 3)
+
+    save_taste(taste)
+    print(f"  [taste] Ingested {len(seed.get('songs',[]))} songs for {mode} mode")
+    return taste
+
+
+# ============================================================
 # RAP MODE — genre queries
 # ============================================================
 RAP_GENRE_QUERIES = [
@@ -44,6 +177,20 @@ RAP_GENRE_QUERIES = [
     "rap workout", "hype rap", "motivation rap",
     "pop rock", "alternative rock", "indie pop",
     "folk pop", "acoustic pop",
+]
+
+MIXED_GENRE_QUERIES = [
+    "pop rock", "alternative rock", "indie pop",
+    "R&B soul", "neo soul", "contemporary R&B",
+    "Chinese pop", "Chinese folk", "Cantonese classic",
+    "Mandarin ballad", "90s Chinese pop", "Chinese indie",
+    "acoustic pop", "singer-songwriter", "folk pop",
+    "electronic pop", "synth pop", "dream pop",
+    "classic rock", "soft rock", "pop punk",
+    "funk", "disco classic", "Motown",
+    "jazz vocal", "smooth jazz", "bossa nova",
+    "world music", "Latin pop", "reggae pop",
+    "orchestral pop", "film soundtrack", "musical theatre",
 ]
 
 AFTERMATH_ARTISTS = [
@@ -181,40 +328,7 @@ def _norm(name):
     return "".join(c.lower() for c in name if c.isalnum())
 
 
-# ============================================================
-# TASTE PROFILE
-# ============================================================
-
-def load_taste_profile():
-    """Load or build taste profile."""
-    if os.path.exists(TASTE_FILE):
-        with open(TASTE_FILE, "r", encoding="utf-8") as f:
-            profile = json.load(f)
-            # Normalize old format (songmid → songid)
-            if "known_mids" in profile:
-                profile["known_ids"] = profile.pop("known_mids")
-            if "known_ids" not in profile:
-                profile["known_ids"] = []
-            if "known_names" not in profile:
-                profile["known_names"] = []
-            return profile
-
-    # No taste file yet — start fresh
-    return {
-        "total_songs": 0,
-        "total_artists": 0,
-        "top_artists": [],
-        "artist_weights": {},
-        "known_ids": [],
-        "known_names": [],
-        "genre_weights": {},
-    }
-
-
-def save_taste(profile):
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(TASTE_FILE, "w", encoding="utf-8") as f:
-        json.dump(profile, f, ensure_ascii=False, indent=2)
+# (load_taste_profile / save_taste replaced by v2 versions at top of file)
 
 
 # ============================================================

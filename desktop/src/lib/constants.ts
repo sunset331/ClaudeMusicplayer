@@ -36,7 +36,7 @@ export const SPRINGS = {
 }
 
 export const SPEED_CONFIG = {
-  slow: { label: '慢', speed: 0.3, blobMoveScale: 0.0001 },
-  medium: { label: '中', speed: 0.6, blobMoveScale: 0.00025 },
-  fast: { label: '快', speed: 1.0, blobMoveScale: 0.0005 },
+  slow: { label: '慢', speed: 0.08, blobMoveScale: 0.00003 },
+  medium: { label: '中', speed: 0.18, blobMoveScale: 0.00007 },
+  fast: { label: '快', speed: 0.35, blobMoveScale: 0.00015 },
 } as const

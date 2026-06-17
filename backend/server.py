@@ -106,6 +106,77 @@ def _current_song(st):
     songs, idx = st["songs"], st["current_idx"]
     return songs[idx] if 0 <= idx < len(songs) else None
 
+def _record_feedback(song_id: int, song: dict | None, action: str):
+    """Record like/skip/add in history.json — mirrors app.py _track_play()."""
+    path = os.path.join(DATA_DIR, "history.json")
+    h = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                h = json.load(f)
+        except Exception:
+            pass
+    sid = str(song_id)
+    if "song_plays" not in h:
+        h["song_plays"] = {}
+    entry = h["song_plays"].get(sid, {
+        "name": (song or {}).get("songname", str(song_id)),
+        "artist": ", ".join(s.get("name", "") for s in (song or {}).get("singer", [])) if song else "",
+        "count": 0,
+    })
+    if action == "like":
+        entry["liked"] = True
+        # Also update liked_artists
+        if "liked_artists" not in h:
+            h["liked_artists"] = {}
+        if song:
+            for s in song.get("singer", []):
+                name = s.get("name", "") if isinstance(s, dict) else str(s)
+                if name:
+                    h["liked_artists"][name] = h["liked_artists"].get(name, 0) + 1
+    elif action == "skip":
+        entry["skipped"] = True
+        if "skipped_artists" not in h:
+            h["skipped_artists"] = {}
+        if song:
+            for s in song.get("singer", []):
+                name = s.get("name", "") if isinstance(s, dict) else str(s)
+                if name:
+                    h["skipped_artists"][name] = h["skipped_artists"].get(name, 0) + 1
+    h["song_plays"][sid] = entry
+    if "recommended_ids" not in h:
+        h["recommended_ids"] = []
+    if sid not in h["recommended_ids"]:
+        h["recommended_ids"].append(sid)
+        h["recommended_ids"] = h["recommended_ids"][-5000:]
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(h, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        log.warning("Failed to write history: %s", e)
+
+
+def _find_or_create_playlist(mode: str) -> int | None:
+    """Find or create NetEase playlist. Mirrors app.py _find_playlist()."""
+    try:
+        d = ncm("/user/playlist", {"uid": 0})
+        playlists = d.get("playlist", []) if d else []
+        pid = None
+        target = "Claude Rap" if mode == "rap" else "Claude Picks"
+        for pl in playlists:
+            if pl.get("name") == target:
+                pid = pl.get("id")
+                break
+        if not pid:
+            d2 = ncm("/playlist/create", {"name": target, "privacy": 0})
+            if d2:
+                pid = d2.get("id") or d2.get("playlist", {}).get("id")
+        return pid
+    except Exception as e:
+        log.warning("Playlist find/create failed: %s", e)
+        return None
+
+
 def _song_to_dict(song):
     singer = song.get("singer", song.get("artist", ""))
     if isinstance(singer, list):
@@ -215,7 +286,13 @@ async def like_song(song_id: int):
         st["play_count"] += 1
         st["epsilon"] = max(0.05, st["epsilon"] - 0.01)
         eps = st["epsilon"]
+        sid = str(song_id)
+        song = next((s for s in st["candidates"] if str(s.get("songid")) == sid), None)
+        if not song:
+            song = next((s for s in st["songs"] if str(s.get("songid")) == sid), None)
     _save_state()
+    _record_feedback(song_id, song, "like")
+    log.info("Like song=%d epsilon=%.2f", song_id, eps)
     return {"ok": True, "epsilon": eps}
 
 @app.post("/api/skip/{song_id}")
@@ -372,14 +449,13 @@ async def switch_mode(body: dict):
 
 @app.post("/api/playlist/add/{song_id}")
 async def add_to_playlist(song_id: int):
-    """Add song to NetEase playlist."""
+    """Add song to NetEase playlist. Auto-creates playlist if needed."""
     try:
         with _read_state() as st:
             mode = st["mode"]
-        pid_key = "playlist_rap" if mode == "rap" else "playlist_mixed"
-        pid = _state.get(pid_key)
+        pid = _find_or_create_playlist(mode)
         if not pid:
-            return {"ok": False, "error": "Playlist not found. Login first."}
+            return {"ok": False, "error": "Cannot find or create playlist. Login first."}
         ncm("/playlist/tracks", {"op": "add", "pid": pid, "tracks": str(song_id)})
         return {"ok": True}
     except Exception as e:

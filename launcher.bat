@@ -13,28 +13,31 @@ echo   ░     后端 :8765 | 前端 :5173          ░
 echo   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 echo.
 
+echo [0/3] Cleaning up old processes...
+taskkill /fi "WINDOWTITLE eq ClaudeMusic-Backend*" /f >nul 2>&1
+taskkill /fi "WINDOWTITLE eq ClaudeMusic-Frontend*" /f >nul 2>&1
+REM Kill anything holding the ports
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%FRONTEND_PORT% " ^| findstr "LISTENING"') do taskkill /pid %%a /f >nul 2>&1
+echo        Done.
+
 echo [1/3] Starting Python backend...
 start "ClaudeMusic-Backend" /min cmd /c "cd /d %~dp0 && %PYTHON% backend\server.py"
 echo        Backend starting on http://localhost:%BACKEND_PORT%
 
-echo [2/3] Waiting for backend (may take 5-10s)...
+echo [2/3] Waiting for backend...
 :wait_backend
 timeout /t 2 /nobreak >nul
 curl -s http://localhost:%BACKEND_PORT%/api/status >nul 2>&1
-if errorlevel 1 (
-    echo        Still waiting...
-    goto wait_backend
-)
+if errorlevel 1 goto wait_backend
 echo        Backend ready!
 
 echo [3/3] Starting frontend dev server...
 start "ClaudeMusic-Frontend" /min cmd /c "cd /d %~dp0desktop && npx vite --port %FRONTEND_PORT% --host"
 echo        Frontend starting on http://localhost:%FRONTEND_PORT%
-echo        (first launch may take 30-60s for Vite to warm up)
 
 echo.
 echo   ════════════════════════════════════════
-echo     Opening browser in 5 seconds...
+echo     Waiting 5s for Vite to warm up...
 echo     Press any key here to STOP all
 echo   ════════════════════════════════════════
 echo.

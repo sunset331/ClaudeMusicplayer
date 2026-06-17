@@ -10,6 +10,7 @@ import VolumeControl from './components/Controls/VolumeControl'
 import QueuePanel from './components/Queue/QueuePanel'
 import ChatPanel from './components/Chat/ChatPanel'
 import ScorePanel from './components/Score/ScorePanel'
+import Spectrogram from './components/Visualizer/Spectrogram'
 import { ListMusic, MessageCircle, RefreshCw } from 'lucide-react'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -127,6 +128,7 @@ function PlayerUI() {
           flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <ProgressBar currentTime={currentTime} duration={duration}
             onSeek={seekTo} disabled={playbackState === 'idle' || playbackState === 'loading'} />
+          <Spectrogram />
           <PlayControls playbackState={playbackState}
             onToggle={togglePlay} onPrev={prevSong} onNext={nextSong}
             disabled={playbackState === 'loading'} />

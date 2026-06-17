@@ -897,27 +897,79 @@ def _run_hotkeys():
         except Exception:
             pass
 
-    def on_play_pause():
-        with _read_state() as st: pass  # toggle via API
-        api_post("/api/toggle")
-
+    def on_play_pause(): api_post("/api/toggle")
     def on_next(): api_post("/api/next")
     def on_prev(): api_post("/api/prev")
+    def on_like(): api_post("/api/like/0")  # current song
+    def on_skip(): api_post("/api/skip/0")
+
+    hotkey_map = {
+        '<ctrl>+<alt>+<space>': on_play_pause,
+        '<ctrl>+<alt>+<right>': on_next,
+        '<ctrl>+<alt>+<left>': on_prev,
+        '<ctrl>+<alt>+l': on_like,
+        '<ctrl>+<alt>+s': on_skip,
+    }
+    # Media keys
+    try:
+        hotkey_map['<media_play_pause>'] = on_play_pause
+        hotkey_map['<media_next>'] = on_next
+        hotkey_map['<media_previous>'] = on_prev
+    except Exception:
+        pass
 
     try:
-        with GlobalHotKeys({
-            '<ctrl>+<alt>+<space>': on_play_pause,
-            '<ctrl>+<alt>+<right>': on_next,
-            '<ctrl>+<alt>+<left>': on_prev,
-        }) as h:
-            # Also register media keys if available
-            try:
-                h._handler.Listener._listen_kwargs['suppress'] = False
-            except Exception:
-                pass
+        with GlobalHotKeys(hotkey_map) as h:
             h.join()
     except Exception as e:
         log.warning("Global hotkeys failed: %s", e)
+
+# ── Taskbar progress (Windows ITaskbarList3) ──
+def _run_taskbar():
+    try:
+        import pythoncom
+        import win32gui
+        import win32com.client
+    except ImportError:
+        return  # pywin32 not installed
+
+    pythoncom.CoInitialize()
+    try:
+        taskbar = win32com.client.Dispatch("ITaskbarList3")
+        taskbar.HrInit()
+    except Exception:
+        return
+
+    def find_window():
+        hwnd = None
+        def callback(h, _):
+            nonlocal hwnd
+            if win32gui.IsWindowVisible(h) and "Claude Music" in win32gui.GetWindowText(h):
+                hwnd = h
+                return False
+            return True
+        win32gui.EnumWindows(callback, None)
+        return hwnd
+
+    while True:
+        try:
+            hwnd = find_window()
+            if hwnd:
+                with _read_state() as st:
+                    playing = st["playing"]
+                    t = st.get("current_time", 0)
+                if playing:
+                    taskbar.SetProgressState(hwnd, 0x2)  # TBPF_NORMAL (green)
+                    # Get duration from first song
+                    song = _current_song(_state)
+                    dur = (song.get("duration", 0) or 0) if song else 0
+                    if dur > 0:
+                        taskbar.SetProgressValue(hwnd, int(t * 1000), dur * 1000)
+                else:
+                    taskbar.SetProgressState(hwnd, 0x8)  # TBPF_PAUSED (yellow)
+            time.sleep(0.5)
+        except Exception:
+            time.sleep(2)
 
 # ── Entry ──
 if __name__ == "__main__":
@@ -926,6 +978,7 @@ if __name__ == "__main__":
 
     _thr.Thread(target=_run_tray, daemon=True).start()
     _thr.Thread(target=_run_hotkeys, daemon=True).start()
+    _thr.Thread(target=_run_taskbar, daemon=True).start()
 
     log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

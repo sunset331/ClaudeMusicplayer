@@ -21,15 +21,34 @@ function fbm(x: number, y: number, t: number, seed: number): number {
 
 export default function FluidBackground({ speed = 'medium', mood = 'normal', displayMode = 'pigment' }: FluidBackgroundProps) {
   const bgCanvasRef = useRef<HTMLCanvasElement>(null)
-  const rippleCanvasRef = useRef<HTMLCanvasElement>(null)
+  const rippleCvsRef = useRef<HTMLCanvasElement | null>(null)
   const cfg = SPEED_CONFIG[speed]
   const intensity = mood === 'excited' ? 1.3 : mood === 'calm' ? 0.7 : 1.0
   const modeRef = useRef(displayMode)
   modeRef.current = displayMode
 
+  // Create/destroy ripple canvas directly on document.body
+  useEffect(() => {
+    const cvs = document.createElement('canvas')
+    cvs.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:999;pointer-events:none;display:none'
+    document.body.appendChild(cvs)
+    rippleCvsRef.current = cvs
+    return () => { cvs.remove(); rippleCvsRef.current = null }
+  }, [])
+
+  useEffect(() => {
+    const cvs = rippleCvsRef.current
+    if (cvs) {
+      cvs.style.display = displayMode === 'soft' ? 'block' : 'none'
+      if (displayMode === 'soft') {
+        cvs.width = window.innerWidth; cvs.height = window.innerHeight
+      }
+    }
+  }, [displayMode])
+
   useEffect(() => {
     const canvas = bgCanvasRef.current
-    const rippleCvs = rippleCanvasRef.current
+    const rippleCvs = rippleCvsRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const rctx = rippleCvs?.getContext('2d')
@@ -38,7 +57,8 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
 
     const resize = () => {
       canvas.width = window.innerWidth; canvas.height = window.innerHeight
-      if (rippleCvs) { rippleCvs.width = window.innerWidth; rippleCvs.height = window.innerHeight }
+      const rc = rippleCvsRef.current
+      if (rc) { rc.width = window.innerWidth; rc.height = window.innerHeight }
     }
     resize(); window.addEventListener('resize', resize)
 
@@ -213,11 +233,6 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: displayMode === 'soft' ? '#0a1628' : COLORS.bg, overflow: 'hidden' }}>
       <canvas ref={bgCanvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
-      <canvas ref={rippleCanvasRef} style={{
-        width: '100%', height: '100%', position: 'fixed', inset: 0,
-        zIndex: 15, pointerEvents: 'none',
-        display: displayMode === 'soft' ? 'block' : 'none',
-      }} />
       {displayMode === 'pigment' && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
           background: 'radial-gradient(ellipse at center, transparent 40%, rgba(2,2,3,0.5) 100%)' }} />

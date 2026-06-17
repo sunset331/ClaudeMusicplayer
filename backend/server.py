@@ -10,7 +10,7 @@ import json
 import logging
 import time
 import threading
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 
 # Add parent dir to path so we can import engine.py, chat.py, etc.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -25,7 +25,25 @@ from api.ncm_client import ncm
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(message)s")
 log = logging.getLogger("claude-music")
 
-app = FastAPI(title="Claude Music API", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup + shutdown lifecycle."""
+    _load_state()
+    with _read_state() as st:
+        mode = st["mode"]
+    try:
+        candidates = eng.load_candidates(mode)
+        if candidates:
+            with _read_state() as st:
+                st["candidates"] = candidates
+                st["songs"] = [s for s in candidates if not s.get("_played")]
+            log.info("Pre-loaded %d candidates at startup", len(candidates))
+    except Exception as e:
+        log.warning("Startup candidate load failed: %s", e)
+    yield
+    log.info("Shutting down")
+
+app = FastAPI(title="Claude Music API", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -338,24 +356,6 @@ async def websocket_endpoint(ws: WebSocket):
         with _ws_lock:
             if ws in _ws_clients:
                 _ws_clients.remove(ws)
-
-
-# ── Startup ──
-
-@app.on_event("startup")
-async def startup():
-    _load_state()
-    with _read_state() as st:
-        mode = st["mode"]
-    try:
-        candidates = eng.load_candidates(mode)
-        if candidates:
-            with _read_state() as st:
-                st["candidates"] = candidates
-                st["songs"] = [s for s in candidates if not s.get("_played")]
-            log.info("Pre-loaded %d candidates at startup", len(candidates))
-    except Exception as e:
-        log.warning("Startup candidate load failed: %s", e)
 
 
 if __name__ == "__main__":

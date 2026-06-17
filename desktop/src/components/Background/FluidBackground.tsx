@@ -212,12 +212,11 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: displayMode === 'soft' ? '#0a1628' : COLORS.bg, overflow: 'hidden' }}>
       <canvas ref={bgCanvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
-      {displayMode === 'soft' && (
-        <canvas ref={rippleCanvasRef} style={{
-          width: '100%', height: '100%', position: 'fixed', inset: 0,
-          zIndex: 15, pointerEvents: 'none',
-        }} />
-      )}
+      <canvas ref={rippleCanvasRef} style={{
+        width: '100%', height: '100%', position: 'fixed', inset: 0,
+        zIndex: 15, pointerEvents: 'none',
+        display: displayMode === 'soft' ? 'block' : 'none',
+      }} />
       {displayMode === 'pigment' && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
           background: 'radial-gradient(ellipse at center, transparent 40%, rgba(2,2,3,0.5) 100%)' }} />

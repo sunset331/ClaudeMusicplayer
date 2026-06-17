@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Claude Music — FastAPI Backend
-Wraps existing engine.py / chat.py / smart_dj.py as REST + WebSocket API.
-Zero modification to existing modules.
+Claude Music — Full-stack Server
+Serves React frontend (desktop/dist/) + REST/WebSocket API.
+Replaces tkinter frontend. Zero modification to engine.py/chat.py/etc.
 """
 import sys
 import os
@@ -10,14 +10,16 @@ import json
 import logging
 import time
 import threading
+import webbrowser
 from contextlib import contextmanager, asynccontextmanager
 
 # Add parent dir to path so we can import engine.py, chat.py, etc.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 
 import engine as eng
 from api.ncm_client import ncm
@@ -25,44 +27,14 @@ from api.ncm_client import ncm
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(message)s")
 log = logging.getLogger("claude-music")
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Startup + shutdown lifecycle."""
-    _load_state()
-    with _read_state() as st:
-        mode = st["mode"]
-    try:
-        candidates = eng.load_candidates(mode)
-        if candidates:
-            with _read_state() as st:
-                st["candidates"] = candidates
-                st["songs"] = [s for s in candidates if not s.get("_played")]
-            log.info("Pre-loaded %d candidates at startup", len(candidates))
-    except Exception as e:
-        log.warning("Startup candidate load failed: %s", e)
-    yield
-    log.info("Shutting down")
-
-app = FastAPI(title="Claude Music API", version="2.0.0", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Config
+# ── Paths ──
 HOME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(HOME, "data")
 ART_DIR = os.path.join(DATA_DIR, "covers")
+DIST_DIR = os.path.join(HOME, "desktop", "dist")
+ASSETS_DIR = os.path.join(DIST_DIR, "assets")
 
-# Mount album art as static files
-if os.path.isdir(ART_DIR):
-    app.mount("/api/covers", StaticFiles(directory=ART_DIR), name="covers")
-
-# ── Thread-safe state ──
+# ── Thread-safe global state ──
 _state = {
     "mode": "rap",
     "songs": [],
@@ -77,19 +49,29 @@ _state = {
 }
 _state_lock = threading.RLock()
 
-
 @contextmanager
 def _read_state():
-    """Acquire read lock on state."""
     _state_lock.acquire()
     try:
         yield _state
     finally:
         _state_lock.release()
 
+# ── WebSocket clients ──
+_ws_clients: list[WebSocket] = []
+_ws_lock = threading.Lock()
 
+async def _ws_broadcast(msg: dict):
+    with _ws_lock:
+        clients = list(_ws_clients)
+    for ws in clients:
+        try:
+            await ws.send_json(msg)
+        except Exception:
+            pass
+
+# ── Helpers ──
 def _load_state():
-    """Load persisted session from session.json."""
     path = os.path.join(DATA_DIR, "session.json")
     if not os.path.exists(path):
         return
@@ -99,13 +81,10 @@ def _load_state():
         with _read_state() as st:
             st["mode"] = s.get("mode", "rap")
             st["epsilon"] = s.get("epsilon", 0.15)
-        log.info("Session loaded: mode=%s epsilon=%.2f", st["mode"], st["epsilon"])
     except (json.JSONDecodeError, OSError) as e:
         log.warning("Failed to load session: %s", e)
 
-
 def _save_state():
-    """Persist current session."""
     try:
         with _read_state() as st:
             song = _current_song(st)
@@ -120,22 +99,14 @@ def _save_state():
     except OSError as e:
         log.warning("Failed to save session: %s", e)
 
-
 def _current_song(st):
-    songs = st["songs"]
-    idx = st["current_idx"]
-    if 0 <= idx < len(songs):
-        return songs[idx]
-    return None
-
+    songs, idx = st["songs"], st["current_idx"]
+    return songs[idx] if 0 <= idx < len(songs) else None
 
 def _song_to_dict(song):
-    """Convert a song dict to API-safe format."""
     singer = song.get("singer", song.get("artist", ""))
     if isinstance(singer, list):
-        singer = ", ".join(
-            s.get("name", str(s)) if isinstance(s, dict) else str(s) for s in singer
-        )
+        singer = ", ".join(s.get("name", str(s)) if isinstance(s, dict) else str(s) for s in singer)
     return {
         "id": song.get("songid", song.get("id", 0)),
         "name": song.get("songname", song.get("name", "")),
@@ -150,105 +121,85 @@ def _song_to_dict(song):
         "url": song.get("url"),
     }
 
+# ── Lifespan ──
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _load_state()
+    try:
+        with _read_state() as st:
+            mode = st["mode"]
+        data = eng.load_candidates(mode)
+        if data:
+            songs = data.get("songs", data) if isinstance(data, dict) else data
+            if isinstance(songs, list) and songs:
+                with _read_state() as st:
+                    st["candidates"] = songs
+                    st["songs"] = [s for s in songs if not s.get("_played")]
+                log.info("Pre-loaded %d candidates", len(songs))
+    except Exception as e:
+        log.warning("Startup candidate load: %s", e)
+    yield
+    log.info("Shutting down")
 
-# ── WebSocket manager ──
-_ws_clients: list[WebSocket] = []
-_ws_lock = threading.Lock()
+app = FastAPI(title="Claude Music", version="3.0.0", lifespan=lifespan)
 
-
-async def _ws_broadcast(msg: dict):
-    with _ws_lock:
-        clients = list(_ws_clients)
-    stale = []
-    for ws in clients:
-        try:
-            await ws.send_json(msg)
-        except Exception:
-            stale.append(ws)
-    if stale:
-        with _ws_lock:
-            for ws in stale:
-                if ws in _ws_clients:
-                    _ws_clients.remove(ws)
-
-
-# ── REST Routes ──
+# ── API Routes (must be defined BEFORE static file mounts) ──
 
 @app.get("/api/status")
 async def get_status():
     with _read_state() as st:
-        return {
-            "ok": True,
-            "mode": st["mode"],
-            "epsilon": st["epsilon"],
-            "songCount": len(st["songs"]),
-        }
-
+        return {"ok": True, "mode": st["mode"], "epsilon": st["epsilon"],
+                "songCount": len(st["songs"])}
 
 @app.get("/api/queue")
 async def get_queue():
     with _read_state() as st:
         if not st["songs"]:
-            # Try loading candidates from engine
             try:
-                candidates = eng.load_candidates(st["mode"])
-                if candidates:
-                    st["candidates"] = candidates
-                    st["songs"] = [s for s in candidates if not s.get("_played")]
-                    log.info("Loaded %d candidates for mode=%s", len(st["songs"]), st["mode"])
+                data = eng.load_candidates(st["mode"])
+                if data:
+                    songs = data.get("songs", data) if isinstance(data, dict) else data
+                    if isinstance(songs, list):
+                        st["candidates"] = songs
+                        st["songs"] = [s for s in songs if not s.get("_played")]
+                        log.info("Loaded %d candidates for mode=%s", len(st["songs"]), st["mode"])
             except Exception as e:
                 log.warning("Failed to load candidates: %s", e)
+        return {"songs": [_song_to_dict(s) for s in st["songs"]],
+                "mode": st["mode"], "epsilon": st["epsilon"]}
 
-        return {
-            "songs": [_song_to_dict(s) for s in st["songs"]],
-            "mode": st["mode"],
-            "epsilon": st["epsilon"],
-        }
-
-
-@app.post("/api/play/{song_id}")
+@app.get("/api/play/{song_id}")
 async def play_song(song_id: int):
-    """Get playable URL for a song."""
     url = None
     try:
         data = ncm("/song/url/v1", {"id": song_id, "level": "standard"})
         if data and "data" in data:
             for u in data["data"]:
                 if u.get("id") == song_id and u.get("url"):
-                    url = u["url"]
-                    break
+                    url = u["url"]; break
     except Exception as e:
-        log.warning("Failed to fetch URL for song %d: %s", song_id, e)
-
+        log.warning("URL fetch for song %d: %s", song_id, e)
     with _read_state() as st:
         for i, s in enumerate(st["songs"]):
             if s.get("songid") == song_id or s.get("id") == song_id:
-                st["current_idx"] = i
-                s["url"] = url
-                st["playing"] = True
-                st["current_time"] = 0
-                song_data = _song_to_dict(s)
-                break
+                st["current_idx"] = i; s["url"] = url
+                st["playing"] = True; st["current_time"] = 0
+                song_data = _song_to_dict(s); break
         else:
             song_data = None
-
     _save_state()
     return {"url": url, "song": song_data}
-
 
 @app.post("/api/next")
 async def next_song():
     with _read_state() as st:
-        songs = st["songs"]
-        if not songs:
+        if not st["songs"]:
             return {"nextIndex": -1, "song": None}
-        next_idx = (st["current_idx"] + 1) % len(songs)
-        st["current_idx"] = next_idx
-        st["current_time"] = 0
-        song = _song_to_dict(songs[next_idx])
+        next_idx = (st["current_idx"] + 1) % len(st["songs"])
+        st["current_idx"] = next_idx; st["current_time"] = 0
+        song = _song_to_dict(st["songs"][next_idx])
     _save_state()
     return {"nextIndex": next_idx, "song": song}
-
 
 @app.post("/api/like/{song_id}")
 async def like_song(song_id: int):
@@ -257,31 +208,25 @@ async def like_song(song_id: int):
         st["epsilon"] = max(0.05, st["epsilon"] - 0.01)
         eps = st["epsilon"]
     _save_state()
-    log.info("Like song=%d epsilon=%.2f", song_id, eps)
     return {"ok": True, "epsilon": eps}
-
 
 @app.post("/api/skip/{song_id}")
 async def skip_song(song_id: int):
     with _read_state() as st:
         st["play_count"] += 1
         st["epsilon"] = min(0.50, st["epsilon"] + 0.01)
-    log.info("Skip song=%d", song_id)
     return await next_song()
-
 
 @app.get("/api/lyrics/{song_id}")
 async def get_lyrics(song_id: int):
     with _read_state() as st:
         if song_id in st["lyrics_cache"]:
             return {"lyrics": st["lyrics_cache"][song_id]}
-
     try:
         data = ncm("/lyric", {"id": song_id})
         lrc_text = ""
         if data and "lrc" in data and data["lrc"].get("lyric"):
             lrc_text = data["lrc"]["lyric"]
-
         import re
         lines = []
         for line in lrc_text.split("\n"):
@@ -289,21 +234,17 @@ async def get_lyrics(song_id: int):
             if m:
                 ms = int(m.group(1)) * 60000 + int(float(m.group(2)) * 1000)
                 text = m.group(3).strip()
-                if text:
-                    lines.append({"time": ms, "text": text})
+                if text: lines.append({"time": ms, "text": text})
         lines.sort(key=lambda x: x["time"])
-
         with _read_state() as st:
             st["lyrics_cache"][song_id] = lines
         return {"lyrics": lines}
     except Exception as e:
-        log.warning("Failed to fetch lyrics for song %d: %s", song_id, e)
+        log.warning("Lyrics for song %d: %s", song_id, e)
         return {"lyrics": []}
-
 
 @app.post("/api/rebuild")
 async def rebuild():
-    """Trigger async candidate pool rebuild."""
     def _do():
         try:
             with _read_state() as st:
@@ -315,32 +256,22 @@ async def rebuild():
                     st["candidates"] = scored
                     st["songs"] = [s for s in scored if not s.get("_played")]
                     st["current_idx"] = 0
-                log.info("Rebuild complete: %d songs for mode=%s", len(scored), mode)
+                log.info("Rebuild: %d songs for mode=%s", len(scored), mode)
         except Exception as e:
             log.error("Rebuild failed: %s", e)
-
     threading.Thread(target=_do, daemon=True).start()
     return {"ok": True}
-
 
 @app.get("/api/stats")
 async def get_stats():
     with _read_state() as st:
-        return {
-            "playCount": st["play_count"],
-            "mode": st["mode"],
-            "epsilon": st["epsilon"],
-        }
-
-
-# ── WebSocket for real-time progress ──
+        return {"playCount": st["play_count"], "mode": st["mode"], "epsilon": st["epsilon"]}
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     with _ws_lock:
         _ws_clients.append(ws)
-    log.info("WebSocket client connected (%d total)", len(_ws_clients))
     try:
         while True:
             data = await ws.receive_json()
@@ -349,15 +280,66 @@ async def websocket_endpoint(ws: WebSocket):
                     st["current_time"] = data.get("currentTime", 0)
                 await _ws_broadcast(data)
     except WebSocketDisconnect:
-        log.info("WebSocket client disconnected")
+        pass
     except Exception as e:
-        log.warning("WebSocket error: %s", e)
+        log.warning("WebSocket: %s", e)
     finally:
         with _ws_lock:
             if ws in _ws_clients:
                 _ws_clients.remove(ws)
 
+# ── Serve React build as SPA ──
+# Mount assets directory
+if os.path.isdir(ASSETS_DIR):
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
 
+# Mount album art
+if os.path.isdir(ART_DIR):
+    app.mount("/api/covers", StaticFiles(directory=ART_DIR), name="covers")
+
+# Serve index.html as SPA fallback
+_INDEX_PATH = os.path.join(DIST_DIR, "index.html")
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """Serve React SPA — all non-API routes return index.html."""
+    # Skip API/WS routes that weren't matched above
+    if full_path.startswith("api/") or full_path == "ws":
+        return HTMLResponse(status_code=404)
+    if os.path.isfile(_INDEX_PATH):
+        return FileResponse(_INDEX_PATH)
+    return HTMLResponse("<h1>Frontend not built. Run: cd desktop && npx vite build</h1>", status_code=503)
+
+@app.get("/")
+async def serve_index():
+    if os.path.isfile(_INDEX_PATH):
+        return FileResponse(_INDEX_PATH)
+    return HTMLResponse("<h1>Frontend not built. Run: cd desktop && npx vite build</h1>", status_code=503)
+
+# ── Entry ──
 if __name__ == "__main__":
     import uvicorn
+    import webbrowser as _wb
+
+    # Auto-open browser in app mode (no URL bar)
+    def _open_browser():
+        time.sleep(2)
+        url = "http://localhost:8765"
+        # Try Chrome app mode first, then Edge, then default browser
+        for browser in [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        ]:
+            if os.path.exists(browser):
+                import subprocess
+                subprocess.Popen([browser, f"--app={url}", "--window-size=1200,800"],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                return
+        _wb.open(url)
+
+    threading.Thread(target=_open_browser, daemon=True).start()
+
+    log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

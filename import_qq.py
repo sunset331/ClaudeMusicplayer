@@ -6,22 +6,12 @@ QQ Music Playlist Importer
 3. Saves matched songs to qq_seed_{label}.json
 """
 import json, os, sys, time
-import requests
+
+from api.ncm_client import ncm_get
 
 HOME = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HOME, "data")
-NCM = "http://localhost:3000"
 os.makedirs(DATA_DIR, exist_ok=True)
-
-
-def ncm_get(path, params=None):
-    try:
-        r = requests.get(f"{NCM}{path}", params=params, timeout=15)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        print(f"  [API ERR] {path}: {e}")
-        return None
 
 
 def parse_qq_playlist(raw):

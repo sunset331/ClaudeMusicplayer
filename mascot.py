@@ -12,6 +12,7 @@ import sys
 import random
 import re
 import subprocess
+import tempfile
 import threading
 import tkinter as tk
 from datetime import datetime
@@ -445,33 +446,32 @@ class ClaudeMascot:
     # DJ VOICE (TTS)
     # ============================================================
 
-    @staticmethod
-    def _sanitize_tts(text):
-        """Escape text for PowerShell TTS string."""
-        return text.replace('"', "'").replace('$', ' ').replace('`', ' ').replace('\n', ' ')[:200]
-
     def _tts_speak(self, text, rate=-1):
         """Speak text using Windows TTS in background thread."""
         if not self.voice_enabled:
             return
-        safe = self._sanitize_tts(text)
         # Choose voice: Zira for English, Huihui for Chinese
-        has_chinese = bool(re.search(r'[一-鿿]', safe))
+        has_chinese = bool(re.search(r'[一-鿿]', text))
         voice = "Microsoft Huihui Desktop" if has_chinese else "Microsoft Zira Desktop"
 
         def _speak():
             with self.speaking_lock:
                 self.is_speaking = True
             try:
-                ps = f'''
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+                    f.write(text)
+                    tmp = f.name
+                ps_script = f'''
                     Add-Type -AssemblyName System.Speech
                     $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
                     $synth.SelectVoice("{voice}")
                     $synth.Rate = {rate}
-                    $synth.Speak("{safe}")
+                    $text = Get-Content -Path "{tmp}" -Raw -Encoding UTF8
+                    $synth.Speak($text)
+                    Remove-Item -Path "{tmp}"
                 '''
                 self.root.after(0, lambda: self._draw_speaking(True))
-                subprocess.run(['powershell', '-Command', ps],
+                subprocess.run(['powershell', '-Command', ps_script],
                                capture_output=True, timeout=30)
             except Exception:
                 pass

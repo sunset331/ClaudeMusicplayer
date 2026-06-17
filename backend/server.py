@@ -170,17 +170,22 @@ async def get_queue():
         return {"songs": [_song_to_dict(s) for s in st["songs"]],
                 "mode": st["mode"], "epsilon": st["epsilon"]}
 
-@app.get("/api/play/{song_id}")
-async def play_song(song_id: int):
-    url = None
+def _resolve_song_url(song_id: int) -> str | None:
+    """Fetch a playable URL from NetEase API. Shared by play + stream endpoints."""
     try:
         data = ncm("/song/url/v1", {"id": song_id, "level": "standard"})
         if data and "data" in data:
             for u in data["data"]:
                 if u.get("id") == song_id and u.get("url"):
-                    url = u["url"]; break
+                    return u["url"]
     except Exception as e:
         log.warning("URL fetch for song %d: %s", song_id, e)
+    return None
+
+
+@app.get("/api/play/{song_id}")
+async def play_song(song_id: int):
+    url = _resolve_song_url(song_id)
     with _read_state() as st:
         for i, s in enumerate(st["songs"]):
             if s.get("songid") == song_id or s.get("id") == song_id:
@@ -293,16 +298,7 @@ async def websocket_endpoint(ws: WebSocket):
 @app.get("/api/stream/{song_id}")
 async def stream_audio(song_id: int):
     """Proxy audio stream — NetEase URLs require Referer header."""
-    url = None
-    try:
-        data = ncm("/song/url/v1", {"id": song_id, "level": "standard"})
-        if data and "data" in data:
-            for u in data["data"]:
-                if u.get("id") == song_id and u.get("url"):
-                    url = u["url"]; break
-    except Exception as e:
-        log.warning("Stream URL fetch for %d: %s", song_id, e)
-
+    url = _resolve_song_url(song_id)
     if not url:
         return HTMLResponse(status_code=404)
 

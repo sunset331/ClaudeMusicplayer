@@ -5,25 +5,15 @@ Reads "Song Name - Artist1 / Artist2" format, searches NetEase, creates seed dat
 Usage: python import_txt.py  (requires ncm-api Docker running)
 """
 import json, os, re, sys, time
-import requests
+
+from api.ncm_client import ncm_get
 
 # Work around Windows GBK encoding
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 HOME = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HOME, "data")
-NCM = "http://localhost:3000"
 os.makedirs(DATA_DIR, exist_ok=True)
-
-
-def ncm_get(path, params=None):
-    try:
-        r = requests.get(f"{NCM}{path}", params=params, timeout=15)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        print(f"  [API ERR] {path}: {e}")
-        return None
 
 
 def parse_txt(path):

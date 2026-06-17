@@ -37,7 +37,6 @@ function PlayerUI() {
   const playCount = usePlayerStore((s) => s.playCount)
   const songs = usePlayerStore((s) => s.songs)
   const currentIndex = usePlayerStore((s) => s.currentIndex)
-  const setShaderMood = usePlayerStore((s) => s.setShaderMood)
 
   const [showQueue, setShowQueue] = useState(false)
 
@@ -46,14 +45,8 @@ function PlayerUI() {
     lyrics, currentLyricIndex, currentSong,
     togglePlay, nextSong, prevSong, play,
     seekTo, changeVolume, toggleMuteAudio,
+    handleLike,
   } = usePlayback()
-
-  const handleLike = () => {
-    if (!currentSong) return
-    fetch(`/api/like/${currentSong.id}`, { method: 'POST' }).catch(() => {})
-    setShaderMood('excited')
-    setTimeout(() => setShaderMood('normal'), 3000)
-  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',

@@ -1,0 +1,234 @@
+<h2>三个大胆方向 — 不只是换皮肤</h2>
+<p class="subtitle">每个都彻底改变了布局结构和交互方式。点击选择最让你心动的</p>
+
+<div class="cards">
+  <!-- Direction 1: Immersive Album -->
+  <div class="card" data-choice="immersive" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:linear-gradient(135deg,#0d0d1a,#1a0a2e);border-radius:12px;padding:0;overflow:hidden;font-family:'Segoe UI',sans-serif;position:relative;min-height:340px">
+        <!-- Background: blurred album art -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(192,132,252,0.15) 0%,transparent 60%),linear-gradient(180deg,rgba(240,168,192,0.08) 0%,transparent 40%),radial-gradient(circle at 70% 30%,rgba(100,180,255,0.1) 0%,transparent 40%)"></div>
+        <!-- Scan line effect -->
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.008) 2px,rgba(255,255,255,0.008) 4px);pointer-events:none"></div>
+
+        <!-- Main content -->
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:20px">
+          <!-- Top bar: mode indicator -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div style="background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.25);border-radius:20px;padding:3px 14px;font-size:9px;color:#c084fc">🎧 RAP MODE</div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:20px;padding:3px 14px;font-size:9px;color:#9090c0">🔀 MIXED</div>
+            <div style="margin-left:auto;font-size:18px;cursor:pointer">🐰</div>
+          </div>
+
+          <!-- Large album art -->
+          <div style="width:150px;height:150px;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(240,168,192,0.2));border:1.5px solid rgba(192,132,252,0.3);border-radius:20px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 8px 40px rgba(192,132,252,0.15)">♪</div>
+
+          <!-- Song info -->
+          <div style="font-size:16px;font-weight:bold;color:#fff;text-align:center">Lose Yourself</div>
+          <div style="font-size:11px;color:#c084fc;margin-bottom:8px">Eminem · 8 Mile Soundtrack</div>
+
+          <!-- Big lyrics -->
+          <div style="font-size:15px;color:#fff;font-weight:bold;text-align:center;padding:4px 20px;text-shadow:0 0 12px rgba(240,168,192,0.2)">"Look, if you had one shot..."</div>
+          <div style="font-size:10px;color:#9080b0;text-align:center;margin-bottom:10px">one opportunity</div>
+
+          <!-- Progress -->
+          <div style="display:flex;align-items:center;gap:8px;width:70%;margin-bottom:10px">
+            <span style="font-size:8px;color:#9080b0">1:48</span>
+            <div style="flex:1;background:rgba(255,255,255,0.06);height:3px;border-radius:2px">
+              <div style="background:linear-gradient(90deg,#c084fc,#f0a8c0);height:3px;width:35%;border-radius:2px"></div>
+            </div>
+            <span style="font-size:8px;color:#9080b0">5:20</span>
+          </div>
+
+          <!-- Control strip -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+            <div style="font-size:22px;color:#c084fc;cursor:pointer">⏮</div>
+            <div style="width:44px;height:44px;background:linear-gradient(135deg,#c084fc,#f0a8c0);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(192,132,252,0.3)">▶</div>
+            <div style="font-size:22px;color:#c084fc;cursor:pointer">⏭</div>
+          </div>
+
+          <!-- Action buttons -->
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="background:rgba(240,168,192,0.15);border:1px solid rgba(240,168,192,0.25);border-radius:20px;padding:5px 18px;font-size:10px;color:#f0a8c0;cursor:pointer">💗 Like</div>
+            <div style="background:rgba(128,128,160,0.1);border:1px solid rgba(128,128,160,0.2);border-radius:20px;padding:5px 18px;font-size:10px;color:#9080b0;cursor:pointer">⏭ Skip</div>
+            <div style="background:rgba(100,180,255,0.1);border:1px solid rgba(100,180,255,0.2);border-radius:20px;padding:5px 14px;font-size:10px;color:#64b4ff;cursor:pointer">+ Playlist</div>
+          </div>
+
+          <!-- Bottom hints: slide-up panels -->
+          <div style="display:flex;gap:6px;width:90%;justify-content:center">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:4px 10px;font-size:8px;color:#9080b0;cursor:pointer">📋 48 songs ▸</div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:4px 10px;font-size:8px;color:#9080b0;cursor:pointer">💬 Chat ▸</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 沉浸式专辑视图</h3>
+      <p>专辑艺术是全屏背景。大专辑封面 + 大歌词居中。控制和歌单是浮层/slide-up面板。像坐在暗房里听歌，只有音乐和美术。</p>
+    </div>
+  </div>
+
+  <!-- Direction 2: Cyberpunk Dashboard -->
+  <div class="card" data-choice="dashboard" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a14;border-radius:12px;padding:0;overflow:hidden;font-family:'Segoe UI',sans-serif;position:relative;min-height:340px">
+        <!-- Grid pattern bg -->
+        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(192,132,252,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(192,132,252,0.03) 1px,transparent 1px);background-size:20px 20px"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(192,132,252,0.3),transparent)"></div>
+
+        <div style="position:relative;z-index:1;padding:14px">
+          <!-- Header with mascot + title -->
+          <div style="display:flex;align-items:center;margin-bottom:10px">
+            <div style="font-size:24px;margin-right:8px">🐰</div>
+            <div>
+              <div style="font-size:13px;font-weight:bold;background:linear-gradient(90deg,#c084fc,#64b4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CLAUDE MUSIC</div>
+              <div style="font-size:7px;color:#64b4ff;letter-spacing:2px">CYBERPUNK EDITION v2.0</div>
+            </div>
+            <div style="margin-left:auto;font-size:9px;color:#c084fc;background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.2);border-radius:4px;padding:2px 8px">22:47 CST</div>
+          </div>
+
+          <!-- Asymmetric grid: main content -->
+          <div style="display:flex;gap:8px">
+            <!-- Left: big album + song info -->
+            <div style="flex:0 0 130px">
+              <div style="width:120px;height:120px;background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(100,180,255,0.1));border:1px solid rgba(192,132,252,0.2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:6px;position:relative">
+                ♪
+                <div style="position:absolute;top:4px;left:4px;font-size:7px;color:#c084fc;background:rgba(0,0,0,0.6);padding:1px 4px;border-radius:2px">LIVE</div>
+              </div>
+              <div style="font-size:12px;font-weight:bold;color:#fff">Lose Yourself</div>
+              <div style="font-size:9px;color:#c084fc">Eminem</div>
+              <div style="font-size:7px;color:#6060a0;margin-bottom:6px">8 Mile · Hip-Hop</div>
+              <!-- Mini stats -->
+              <div style="display:flex;gap:4px">
+                <div style="flex:1;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.1);border-radius:4px;padding:4px;text-align:center">
+                  <div style="font-size:12px;font-weight:bold;color:#f0a8c0">0.92</div>
+                  <div style="font-size:6px;color:#6060a0">MATCH</div>
+                </div>
+                <div style="flex:1;background:rgba(100,180,255,0.06);border:1px solid rgba(100,180,255,0.1);border-radius:4px;padding:4px;text-align:center">
+                  <div style="font-size:12px;font-weight:bold;color:#64b4ff">48</div>
+                  <div style="font-size:6px;color:#6060a0">QUEUE</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: columns -->
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <!-- Lyrics panel -->
+              <div style="background:rgba(192,132,252,0.04);border:1px solid rgba(192,132,252,0.08);border-radius:6px;padding:8px;flex:1">
+                <div style="font-size:7px;color:#c084fc;letter-spacing:1px;margin-bottom:4px">◆ NOW PLAYING</div>
+                <div style="font-size:14px;font-weight:bold;color:#fff;text-shadow:0 0 10px rgba(192,132,252,0.15)">"Look, if you had one shot..."</div>
+                <div style="font-size:9px;color:#9080b0;margin-bottom:4px">one opportunity</div>
+                <div style="background:rgba(255,255,255,0.04);height:2px;border-radius:1px;margin-bottom:4px">
+                  <div style="background:linear-gradient(90deg,#c084fc,#f0a8c0);height:2px;width:35%;border-radius:1px"></div>
+                </div>
+                <div style="display:flex;gap:4px">
+                  <div style="background:rgba(240,168,192,0.12);border:1px solid rgba(240,168,192,0.2);border-radius:12px;padding:3px 10px;font-size:8px;color:#f0a8c0">💗</div>
+                  <div style="background:rgba(128,128,160,0.08);border:1px solid rgba(128,128,160,0.15);border-radius:12px;padding:3px 10px;font-size:8px;color:#9080b0">⏭</div>
+                  <div style="background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.15);border-radius:12px;padding:3px 10px;font-size:8px;color:#64b4ff">+</div>
+                </div>
+              </div>
+
+              <!-- Bottom row: queue + chat -->
+              <div style="display:flex;gap:6px">
+                <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:6px">
+                  <div style="font-size:7px;color:#64b4ff;letter-spacing:1px;margin-bottom:3px">◆ QUEUE</div>
+                  <div style="font-size:8px;color:#d0d0f0">Still D.R.E.</div>
+                  <div style="font-size:7px;color:#6060a0">Dr. Dre</div>
+                  <div style="font-size:8px;color:#9080b0;margin-top:2px">In Da Club</div>
+                  <div style="font-size:7px;color:#6060a0">50 Cent</div>
+                </div>
+                <div style="flex:0.7;background:rgba(192,132,252,0.03);border:1px solid rgba(192,132,252,0.08);border-radius:6px;padding:6px">
+                  <div style="font-size:7px;color:#f0a8c0;letter-spacing:1px;margin-bottom:3px">◆ CHAT</div>
+                  <div style="font-size:7px;color:#d0d0f0;line-height:1.4"><b style="color:#f0a8c0">Claude:</b> Pure hunger. He wrote this on a lunch break during 8 Mile filming.</div>
+                  <div style="background:rgba(255,255,255,0.03);border-radius:4px;padding:3px;margin-top:4px;font-size:7px;color:#6060a0">Type...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 赛博仪表盘</h3>
+      <p>不对称网格 + 数据小部件。大专辑封面旁边是歌词面板。底部是迷你队列+聊天。角落有实时数据和萌宠。像飞船操控台。</p>
+    </div>
+  </div>
+
+  <!-- Direction 3: Companion-Centric -->
+  <div class="card" data-choice="companion" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:linear-gradient(180deg,#1a1028 0%,#0d0d1a 100%);border-radius:12px;padding:14px;font-family:'Segoe UI',sans-serif;position:relative;overflow:hidden;min-height:340px">
+        <!-- Subtle particle effect -->
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(240,168,192,0.06) 0%,transparent 30%),radial-gradient(circle at 70% 60%,rgba(192,132,252,0.06) 0%,transparent 30%)"></div>
+
+        <div style="position:relative;z-index:1;display:flex;gap:10px;height:100%">
+          <!-- LEFT: Mascot Sidebar -->
+          <div style="flex:0 0 120px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <!-- Mascot avatar area -->
+            <div style="width:90px;height:90px;background:radial-gradient(circle at 50% 40%,#f0a8c0,#c084fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:6px;box-shadow:0 0 40px rgba(192,132,252,0.2);position:relative">
+              🐰
+              <div style="position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;background:#0d0d1a;border:1.5px solid #c084fc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px">💬</div>
+            </div>
+            <div style="font-size:10px;font-weight:bold;color:#f0a8c0;text-align:center">Mochi</div>
+            <div style="font-size:7px;color:#9080b0;text-align:center;margin-bottom:8px">your music buddy</div>
+            <!-- Mascot speech bubble -->
+            <div style="background:rgba(240,168,192,0.08);border:1px solid rgba(240,168,192,0.15);border-radius:10px;padding:6px 8px;font-size:7px;color:#e8d0f0;text-align:center;max-width:110px;position:relative">
+              "This beat is pure fire! Want me to find more like this?"
+              <div style="position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:6px solid rgba(240,168,192,0.15)"></div>
+            </div>
+            <!-- Mode toggle -->
+            <div style="display:flex;gap:3px;margin-top:8px">
+              <div style="background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.3);border-radius:10px;padding:2px 8px;font-size:7px;color:#c084fc">🎧 Rap</div>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:2px 8px;font-size:7px;color:#9080b0">🔀 Mix</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Music Content -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+            <!-- Now playing card -->
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center">
+              <div style="width:80px;height:80px;background:linear-gradient(135deg,rgba(192,132,252,0.2),rgba(240,168,192,0.15));border:1px solid rgba(192,132,252,0.2);border-radius:12px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:28px">♪</div>
+              <div style="font-size:13px;font-weight:bold;color:#fff">Lose Yourself</div>
+              <div style="font-size:9px;color:#c084fc">Eminem</div>
+              <div style="background:rgba(255,255,255,0.04);height:2px;border-radius:1px;margin:6px auto;width:70%">
+                <div style="background:linear-gradient(90deg,#c084fc,#f0a8c0);height:2px;width:35%;border-radius:1px"></div>
+              </div>
+              <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+                <span style="font-size:9px;color:#c084fc">⏮</span>
+                <span style="font-size:16px;color:#f0a8c0">▶</span>
+                <span style="font-size:9px;color:#c084fc">⏭</span>
+              </div>
+            </div>
+
+            <!-- Song queue mini -->
+            <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:6px;flex:1;overflow:hidden">
+              <div style="font-size:7px;color:#c084fc;letter-spacing:1px;margin-bottom:4px">NEXT UP</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px;background:rgba(192,132,252,0.06);border-radius:6px;margin-bottom:3px">
+                <span style="font-size:8px;color:#f0a8c0">2</span>
+                <span style="flex:1;font-size:9px;color:#fff">Still D.R.E.</span>
+                <span style="font-size:7px;color:#9080b0">Dr. Dre</span>
+                <span style="font-size:7px;color:#f0a8c0">0.87</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px;border-radius:6px;margin-bottom:3px">
+                <span style="font-size:8px;color:#9080b0">3</span>
+                <span style="flex:1;font-size:9px;color:#d0d0f0">In Da Club</span>
+                <span style="font-size:7px;color:#9080b0">50 Cent</span>
+                <span style="font-size:7px;color:#9080b0">0.83</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px;border-radius:6px">
+                <span style="font-size:8px;color:#9080b0">4</span>
+                <span style="flex:1;font-size:9px;color:#d0d0f0">Mockingbird</span>
+                <span style="font-size:7px;color:#9080b0">Eminem</span>
+                <span style="font-size:7px;color:#9080b0">0.81</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 伙伴中心式</h3>
+      <p>萌宠角色(Mochi)主导左侧。它会说话、反应你的操作。专辑卡片在右侧，队列在下方。不像播放器，更像一个音乐伙伴在跟你分享歌曲。</p>
+    </div>
+  </div>
+</div>

@@ -123,14 +123,16 @@ export function usePlayback() {
   }, [toggleMute])
 
   const handleLike = useCallback(() => {
-    // Placeholder — will connect to backend in Phase 2
-    console.log('♥ Liked:', currentSong?.name)
-  }, [currentSong])
+    const s = usePlayerStore.getState()
+    if (!s.currentSong) return
+    fetch(`/api/like/${s.currentSong.id}`, { method: 'POST' }).catch(() => {})
+    s.setShaderMood('excited')
+    setTimeout(() => s.setShaderMood('normal'), 3000)
+  }, [])
 
   const handleSkip = useCallback(() => {
-    console.log('» Skipped:', currentSong?.name)
     nextSong()
-  }, [currentSong, nextSong])
+  }, [nextSong])
 
   return {
     // State

@@ -10,7 +10,6 @@ import json
 import logging
 import time
 import threading
-import webbrowser
 from contextlib import contextmanager, asynccontextmanager
 
 # Add parent dir to path so we can import engine.py, chat.py, etc.
@@ -808,27 +807,6 @@ async def serve_index():
 # ── Entry ──
 if __name__ == "__main__":
     import uvicorn
-    import webbrowser as _wb
-
-    # Auto-open browser in app mode (no URL bar)
-    def _open_browser():
-        time.sleep(2)
-        url = "http://localhost:8765"
-        # Try Chrome app mode first, then Edge, then default browser
-        for browser in [
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        ]:
-            if os.path.exists(browser):
-                import subprocess
-                subprocess.Popen([browser, f"--app={url}", "--window-size=1200,800"],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                return
-        _wb.open(url)
-
-    threading.Thread(target=_open_browser, daemon=True).start()
 
     log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

@@ -2,7 +2,6 @@ import { Component, type ReactNode, useState, useCallback } from 'react'
 import { usePlayerStore } from './store/playerStore'
 import { usePlayback } from './hooks/usePlayback'
 import FluidBackground from './components/Background/FluidBackground'
-import SoftBackground from './components/Background/SoftBackground'
 import TopBar from './components/TopBar'
 import LyricsCanvas from './components/Lyrics/LyricsCanvas'
 import ProgressBar from './components/Controls/ProgressBar'
@@ -71,11 +70,7 @@ function PlayerUI() {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',
       display: 'flex', flexDirection: 'column', background: '#020203' }}>
-      {displayMode === 'pigment' ? (
-        <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
-      ) : (
-        <SoftBackground speed={fluidSpeed} />
-      )}
+      <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} displayMode={displayMode} />
 
       {/* Frosted glass overlay — lighter in soft mode */}
       <div

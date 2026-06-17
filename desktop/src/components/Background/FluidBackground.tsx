@@ -1,31 +1,30 @@
 import { useRef, useEffect } from 'react'
 import { COLORS, SPEED_CONFIG } from '../../lib/constants'
-import type { FluidSpeed, ShaderMood } from '../../types'
+import type { FluidSpeed, ShaderMood, DisplayMode } from '../../types'
 
-interface FluidBackgroundProps { speed?: FluidSpeed; mood?: ShaderMood }
+interface FluidBackgroundProps {
+  speed?: FluidSpeed; mood?: ShaderMood; displayMode?: DisplayMode
+}
 
 const rgb = (c: readonly number[], a: number) =>
   `rgba(${c.map(v => Math.round(v * 255)).join(',')}, ${a})`
 
-// ── Simplex-like noise for liquid deformation ──
 function noise(x: number, y: number, seed: number): number {
   const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453
   return n - Math.floor(n)
 }
-
 function fbm(x: number, y: number, t: number, seed: number): number {
   let v = 0, a = 0.5, f = 1.0
-  for (let i = 0; i < 3; i++) {
-    v += a * noise(x * f + t * 0.3, y * f, seed + i)
-    a *= 0.5; f *= 2.0
-  }
+  for (let i = 0; i < 3; i++) { v += a * noise(x * f + t * 0.3, y * f, seed + i); a *= 0.5; f *= 2.0 }
   return v
 }
 
-export default function FluidBackground({ speed = 'medium', mood = 'normal' }: FluidBackgroundProps) {
+export default function FluidBackground({ speed = 'medium', mood = 'normal', displayMode = 'pigment' }: FluidBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cfg = SPEED_CONFIG[speed]
   const intensity = mood === 'excited' ? 1.3 : mood === 'calm' ? 0.7 : 1.0
+  const modeRef = useRef(displayMode)
+  modeRef.current = displayMode
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -37,136 +36,168 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal' }: F
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize(); window.addEventListener('resize', resize)
 
-    // Three pigment masses — each drawn as multiple overlapping fluid droplets
+    // ── Pigment state ──
     const pigments = [
       { cx: 0.35, cy: 0.42, color: COLORS.pigment.red,   seed: 0,   drops: 5, scale: 0.32 },
       { cx: 0.62, cy: 0.48, color: COLORS.pigment.blue,  seed: 100, drops: 4, scale: 0.28 },
       { cx: 0.48, cy: 0.58, color: COLORS.pigment.yellow, seed: 200, drops: 4, scale: 0.26 },
     ]
+    // ── Ripple state ──
+    const ripples: { x: number; y: number; maxR: number; r: number; alpha: number; lw: number; phase: number }[] = []
+    const raindrops: { x: number; y: number; progress: number; spd: number }[] = []
+    let dropTimer = 0
+    const spawnDrop = (w: number, h: number) => {
+      raindrops.push({ x: Math.random() * w, y: Math.random() * h * 0.7 + h * 0.1, progress: 0, spd: 0.4 + Math.random() * 0.6 })
+    }
+    // Seed initial ripples
+    for (let i = 0; i < 6; i++) spawnDrop(canvas.width, canvas.height)
+    for (let i = 0; i < 6; i++) ripples.push({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.6 + canvas.height * 0.2,
+      maxR: 40 + Math.random() * 80, r: 10 + Math.random() * 40,
+      alpha: 0.2 + Math.random() * 0.3, lw: 1 + Math.random(), phase: Math.random() * 0.5,
+    })
 
     const animate = () => {
       time += 0.008 * cfg.speed
       const w = canvas.width, h = canvas.height
-      const scale = Math.min(w, h)
+      const m = modeRef.current
 
-      ctx.fillStyle = COLORS.bg
-      ctx.fillRect(0, 0, w, h)
+      if (m === 'soft') {
+        // ══════ Ripple mode ══════
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, h)
+        bgGrad.addColorStop(0, '#0a1628'); bgGrad.addColorStop(0.4, '#0d1f3c')
+        bgGrad.addColorStop(0.7, '#0f2547'); bgGrad.addColorStop(1, '#0a1a35')
+        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, w, h)
 
-      // Repulsion between pigment centers
-      for (const p of pigments) {
-        for (const q of pigments) {
-          if (p === q) continue
-          const dx = p.cx - q.cx, dy = p.cy - q.cy
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          const minDist = (p.scale + q.scale) * 0.7
-          if (dist < minDist && dist > 0.001) {
-            const f = (minDist - dist) / minDist * 0.008
-            p.cx += (dx / dist) * f; p.cy += (dy / dist) * f
-            q.cx -= (dx / dist) * f; q.cy -= (dy / dist) * f
+        // Underwater light
+        ctx.save(); ctx.globalAlpha = 0.03
+        for (let i = 0; i < 3; i++) {
+          const cx = w * 0.3 + Math.sin(time * 0.4 + i * 2.1) * w * 0.25
+          const cy = h * 0.4 + Math.cos(time * 0.35 + i * 1.7) * h * 0.2
+          const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.35)
+          grd.addColorStop(0, '#3a6080'); grd.addColorStop(1, 'transparent')
+          ctx.fillStyle = grd; ctx.fillRect(0, 0, w, h)
+        }
+        ctx.restore()
+
+        // Moonlight
+        ctx.save(); ctx.globalAlpha = 0.06
+        const mx = w * 0.7 + Math.sin(time * 0.2) * w * 0.05, my = h * 0.15
+        const mg = ctx.createRadialGradient(mx, my, 0, mx, my, Math.min(w, h) * 0.6)
+        mg.addColorStop(0, '#8098b0'); mg.addColorStop(0.3, '#405060'); mg.addColorStop(1, 'transparent')
+        ctx.fillStyle = mg; ctx.fillRect(0, 0, w, h); ctx.restore()
+
+        // Spawn drops
+        dropTimer += 0.016; const interval = 0.8
+        if (dropTimer > interval && raindrops.length < 30) { dropTimer = 0; spawnDrop(w, h); if (raindrops.length < 15) spawnDrop(w, h) }
+
+        // Falling drops
+        for (let i = raindrops.length - 1; i >= 0; i--) {
+          const d = raindrops[i]; d.progress += 0.016 * d.spd * 3
+          if (d.progress < 0.85) {
+            const dy = -20 + (d.y + 20) * d.progress
+            ctx.save(); ctx.globalAlpha = 0.25 * (1 - d.progress); ctx.strokeStyle = '#a0b8d0'; ctx.lineWidth = 1
+            ctx.beginPath(); ctx.moveTo(d.x, dy); ctx.lineTo(d.x, dy + 6); ctx.stroke(); ctx.restore()
+          }
+          if (d.progress >= 1) {
+            ripples.push({ x: d.x, y: d.y, maxR: 30 + Math.random() * 60, r: 0, alpha: 0.5, lw: 1.5 + Math.random() * 1.5, phase: 0 })
+            raindrops.splice(i, 1)
           }
         }
-      }
 
-      // Draw each pigment mass
-      for (const p of pigments) {
-        // Slow Lissajous drift
-        const s = p.seed * 0.01
-        const tx = 0.5 + Math.sin(time * 0.4 + s) * 0.12 + Math.cos(time * 0.3 + s * 2) * 0.08
-        const ty = 0.5 + Math.cos(time * 0.35 + s) * 0.10 + Math.sin(time * 0.28 + s * 1.5) * 0.09
-        p.cx += (tx - p.cx) * 0.015
-        p.cy += (ty - p.cy) * 0.015
-
-        const px = p.cx * w, py = p.cy * h
-        const baseR = p.scale * scale
-
-        // ── Draw multiple fluid droplets that merge into one organic shape ──
-        for (let d = 0; d < p.drops; d++) {
-          const dropAngle = (d / p.drops) * Math.PI * 2 + time * 0.15
-          const dropDist = baseR * 0.25 * (0.5 + 0.5 * Math.sin(time * 0.2 + d))
-          const dx = px + Math.cos(dropAngle) * dropDist
-          const dy = py + Math.sin(dropAngle) * dropDist
-          const dropR = baseR * (0.5 + 0.3 * Math.sin(time * 0.25 + d * 1.7))
-
-          // Liquid blob: distorted circle via FBM noise
-          ctx.save()
-          ctx.filter = `blur(${baseR * 0.18}px)`
-          ctx.fillStyle = rgb(p.color, 0.5 * intensity)
-          ctx.beginPath()
-          const steps = 32
-          for (let i = 0; i <= steps; i++) {
-            const a = (i / steps) * Math.PI * 2
-            // FBM noise deforms the radius
-            const nx = Math.cos(a), ny = Math.sin(a)
-            const deformation = 1 + fbm(nx * 3 + d, ny * 3 + d, time * 0.4, p.seed) * 0.35
-            const r = dropR * deformation
-            const x = dx + Math.cos(a) * r
-            const y = dy + Math.sin(a) * r
-            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-          }
-          ctx.closePath(); ctx.fill()
+        // Ripples
+        for (let i = ripples.length - 1; i >= 0; i--) {
+          const rp = ripples[i]; rp.phase += 0.04; rp.r += 1.3 * (1 - rp.phase * 0.7); rp.alpha -= 0.013
+          if (rp.alpha <= 0 || rp.r > rp.maxR) { ripples.splice(i, 1); continue }
+          ctx.save(); ctx.globalAlpha = rp.alpha; ctx.strokeStyle = '#8098b0'; ctx.lineWidth = rp.lw * (1 - rp.phase * 0.6)
+          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2); ctx.stroke()
+          if (rp.r > 8) { ctx.globalAlpha = rp.alpha * 0.4; ctx.lineWidth = rp.lw * 0.6; ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r * 0.55, 0, Math.PI * 2); ctx.stroke() }
           ctx.restore()
         }
 
-        // ── Core: denser center ──
-        ctx.save()
-        ctx.filter = `blur(${baseR * 0.08}px)`
-        ctx.fillStyle = rgb(p.color, 0.7 * intensity)
-        ctx.beginPath()
-        const steps2 = 24
-        for (let i = 0; i <= steps2; i++) {
-          const a = (i / steps2) * Math.PI * 2
-          const deformation = 1 + fbm(Math.cos(a) * 2.5, Math.sin(a) * 2.5, time * 0.35, p.seed + 50) * 0.25
-          const r = baseR * 0.45 * deformation
-          const x = px + Math.cos(a) * r
-          const y = py + Math.sin(a) * r
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-        }
-        ctx.closePath(); ctx.fill()
-        ctx.restore()
+        // Vignette
+        const vg = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.3, w * 0.5, h * 0.5, Math.max(w, h) * 0.75)
+        vg.addColorStop(0, 'transparent'); vg.addColorStop(1, 'rgba(0,0,0,0.35)')
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h)
 
-        // ── Tendrils: thin wispy extensions ──
-        ctx.save()
-        ctx.filter = `blur(${baseR * 0.12}px)`
-        const numTendrils = 3
-        for (let t = 0; t < numTendrils; t++) {
-          const tendrilAngle = (t / numTendrils) * Math.PI * 2 + time * 0.12 + p.seed
-          const tendrilLen = baseR * (0.8 + 0.4 * Math.sin(time * 0.3 + t))
-          ctx.strokeStyle = rgb(p.color, 0.3 * intensity)
-          ctx.lineWidth = baseR * 0.12
-          ctx.lineCap = 'round'
-          ctx.beginPath()
-          ctx.moveTo(px, py)
-          // Bezier curve for flowing tendril
-          const cp1x = px + Math.cos(tendrilAngle) * tendrilLen * 0.5 + Math.sin(tendrilAngle) * baseR * 0.15
-          const cp1y = py + Math.sin(tendrilAngle) * tendrilLen * 0.5 + Math.cos(tendrilAngle) * baseR * 0.15
-          const cp2x = px + Math.cos(tendrilAngle) * tendrilLen * 0.8 + Math.sin(tendrilAngle + 0.5) * baseR * 0.1
-          const cp2y = py + Math.sin(tendrilAngle) * tendrilLen * 0.8 + Math.cos(tendrilAngle + 0.5) * baseR * 0.1
-          const ex = px + Math.cos(tendrilAngle) * tendrilLen
-          const ey = py + Math.sin(tendrilAngle) * tendrilLen
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ex, ey)
-          ctx.stroke()
-        }
-        ctx.restore()
+      } else {
+        // ══════ Pigment mode ══════
+        const scale = Math.min(w, h)
+        ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, w, h)
 
-        // ── Specular highlight ──
-        ctx.fillStyle = `rgba(255,255,255,${0.08 * intensity})`
-        ctx.beginPath()
-        ctx.ellipse(px - baseR * 0.1, py - baseR * 0.15, baseR * 0.15, baseR * 0.08, -0.3, 0, Math.PI * 2)
-        ctx.fill()
+        // Repulsion
+        for (const p of pigments) {
+          for (const q of pigments) {
+            if (p === q) continue
+            const dx = p.cx - q.cx, dy = p.cy - q.cy, dist = Math.sqrt(dx * dx + dy * dy)
+            const minDist = (p.scale + q.scale) * 0.7
+            if (dist < minDist && dist > 0.001) { const f = (minDist - dist) / minDist * 0.008; p.cx += (dx / dist) * f; p.cy += (dy / dist) * f; q.cx -= (dx / dist) * f; q.cy -= (dy / dist) * f }
+          }
+        }
+
+        for (const p of pigments) {
+          const s = p.seed * 0.01
+          p.cx += (0.5 + Math.sin(time * 0.4 + s) * 0.12 + Math.cos(time * 0.3 + s * 2) * 0.08 - p.cx) * 0.015
+          p.cy += (0.5 + Math.cos(time * 0.35 + s) * 0.10 + Math.sin(time * 0.28 + s * 1.5) * 0.09 - p.cy) * 0.015
+          const px = p.cx * w, py = p.cy * h, baseR = p.scale * scale
+
+          for (let d = 0; d < p.drops; d++) {
+            const da = (d / p.drops) * Math.PI * 2 + time * 0.15
+            const dd = baseR * 0.25 * (0.5 + 0.5 * Math.sin(time * 0.2 + d))
+            const dx = px + Math.cos(da) * dd, dy = py + Math.sin(da) * dd
+            const dropR = baseR * (0.5 + 0.3 * Math.sin(time * 0.25 + d * 1.7))
+            ctx.save(); ctx.filter = `blur(${baseR * 0.18}px)`; ctx.fillStyle = rgb(p.color, 0.5 * intensity)
+            ctx.beginPath()
+            for (let i = 0; i <= 32; i++) {
+              const a = (i / 32) * Math.PI * 2
+              const def = 1 + fbm(Math.cos(a) * 3 + d, Math.sin(a) * 3 + d, time * 0.4, p.seed) * 0.35
+              const rx = dx + Math.cos(a) * dropR * def, ry = dy + Math.sin(a) * dropR * def
+              i === 0 ? ctx.moveTo(rx, ry) : ctx.lineTo(rx, ry)
+            }
+            ctx.closePath(); ctx.fill(); ctx.restore()
+          }
+          // Core
+          ctx.save(); ctx.filter = `blur(${baseR * 0.08}px)`; ctx.fillStyle = rgb(p.color, 0.7 * intensity); ctx.beginPath()
+          for (let i = 0; i <= 24; i++) {
+            const a = (i / 24) * Math.PI * 2
+            const def = 1 + fbm(Math.cos(a) * 2.5, Math.sin(a) * 2.5, time * 0.35, p.seed + 50) * 0.25
+            const rx = px + Math.cos(a) * baseR * 0.45 * def, ry = py + Math.sin(a) * baseR * 0.45 * def
+            i === 0 ? ctx.moveTo(rx, ry) : ctx.lineTo(rx, ry)
+          }
+          ctx.closePath(); ctx.fill(); ctx.restore()
+
+          // Tendrils
+          ctx.save(); ctx.filter = `blur(${baseR * 0.12}px)`
+          for (let t = 0; t < 3; t++) {
+            const ta = (t / 3) * Math.PI * 2 + time * 0.12 + p.seed
+            const tl = baseR * (0.8 + 0.4 * Math.sin(time * 0.3 + t))
+            ctx.strokeStyle = rgb(p.color, 0.3 * intensity); ctx.lineWidth = baseR * 0.12; ctx.lineCap = 'round'; ctx.beginPath()
+            ctx.moveTo(px, py)
+            const cp1x = px + Math.cos(ta) * tl * 0.5 + Math.sin(ta) * baseR * 0.15
+            const cp1y = py + Math.sin(ta) * tl * 0.5 + Math.cos(ta) * baseR * 0.15
+            const cp2x = px + Math.cos(ta) * tl * 0.8 + Math.sin(ta + 0.5) * baseR * 0.1
+            const cp2y = py + Math.sin(ta) * tl * 0.8 + Math.cos(ta + 0.5) * baseR * 0.1
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, px + Math.cos(ta) * tl, py + Math.sin(ta) * tl); ctx.stroke()
+          }
+          ctx.restore()
+          // Highlight
+          ctx.fillStyle = `rgba(255,255,255,${0.08 * intensity})`; ctx.beginPath()
+          ctx.ellipse(px - baseR * 0.1, py - baseR * 0.15, baseR * 0.15, baseR * 0.08, -0.3, 0, Math.PI * 2); ctx.fill()
+        }
       }
-
       animId = requestAnimationFrame(animate)
     }
     animate()
-
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
   }, [cfg.speed, intensity])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: COLORS.bg, overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: displayMode === 'soft' ? '#0a1628' : COLORS.bg, overflow: 'hidden' }}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(2,2,3,0.5) 100%)' }} />
+      {displayMode === 'pigment' && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(2,2,3,0.5) 100%)' }} />
+      )}
     </div>
   )
 }

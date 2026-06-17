@@ -19,7 +19,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+
+import requests as http_requests
 
 import engine as eng
 from api.ncm_client import ncm
@@ -287,6 +289,36 @@ async def websocket_endpoint(ws: WebSocket):
         with _ws_lock:
             if ws in _ws_clients:
                 _ws_clients.remove(ws)
+
+@app.get("/api/stream/{song_id}")
+async def stream_audio(song_id: int):
+    """Proxy audio stream — NetEase URLs require Referer header."""
+    url = None
+    try:
+        data = ncm("/song/url/v1", {"id": song_id, "level": "standard"})
+        if data and "data" in data:
+            for u in data["data"]:
+                if u.get("id") == song_id and u.get("url"):
+                    url = u["url"]; break
+    except Exception as e:
+        log.warning("Stream URL fetch for %d: %s", song_id, e)
+
+    if not url:
+        return HTMLResponse(status_code=404)
+
+    def generate():
+        try:
+            resp = http_requests.get(url, headers={
+                "Referer": "https://music.163.com/",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            }, stream=True, timeout=30)
+            for chunk in resp.iter_content(chunk_size=65536):
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            log.warning("Stream error for %d: %s", song_id, e)
+
+    return StreamingResponse(generate(), media_type="audio/mpeg")
 
 # ── Serve React build as SPA ──
 # Mount assets directory

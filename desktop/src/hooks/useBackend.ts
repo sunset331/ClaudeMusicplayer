@@ -66,19 +66,8 @@ export function useBackend() {
     async (song: Song) => {
       setPlaybackState('loading')
 
-      try {
-        const res = await fetch(`${API}/play/${song.id}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.url) {
-            song.url = data.url
-          }
-        }
-      } catch {
-        // Use demo URL or existing url
-      }
-
-      const url = song.url
+      // Use audio proxy to bypass NetEase Referer restrictions
+      const url = `${API}/stream/${song.id}`
       if (!url) {
         console.warn('No playable URL for:', song.name)
         setPlaybackState('idle')

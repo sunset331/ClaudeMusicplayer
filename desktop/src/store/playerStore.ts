@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Song, LyricLine, PlaybackState, AppMode, FluidSpeed, ShaderMood } from '../types'
+import type { Song, LyricLine, PlaybackState, AppMode, FluidSpeed, ShaderMood, DisplayMode } from '../types'
 
 interface PlayerStore {
   // ── Queue ──
@@ -34,8 +34,10 @@ interface PlayerStore {
   // ── Fluid Background ──
   fluidSpeed: FluidSpeed
   shaderMood: ShaderMood
+  displayMode: DisplayMode
   setFluidSpeed: (speed: FluidSpeed) => void
   setShaderMood: (mood: ShaderMood) => void
+  setDisplayMode: (mode: DisplayMode) => void
 
   // ── Stats ──
   playCount: number
@@ -78,8 +80,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 
   fluidSpeed: 'medium',
   shaderMood: 'normal',
+  displayMode: 'pigment',
   setFluidSpeed: (fluidSpeed) => set({ fluidSpeed }),
   setShaderMood: (shaderMood) => set({ shaderMood }),
+  setDisplayMode: (displayMode) => set({ displayMode }),
 
   playCount: 0,
   likeCount: 0,

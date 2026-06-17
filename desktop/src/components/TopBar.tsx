@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { formatClock } from '../lib/utils'
-import type { FluidSpeed, AppMode } from '../types'
+import type { FluidSpeed, AppMode, DisplayMode } from '../types'
 
 interface TopBarProps {
   fluidSpeed: FluidSpeed
@@ -9,6 +9,8 @@ interface TopBarProps {
   playCount?: number
   mode?: AppMode
   onModeChange?: (mode: AppMode) => void
+  displayMode?: DisplayMode
+  onDisplayModeChange?: (mode: DisplayMode) => void
 }
 
 const SPEEDS: { key: FluidSpeed; label: string }[] = [
@@ -17,7 +19,7 @@ const SPEEDS: { key: FluidSpeed; label: string }[] = [
   { key: 'fast', label: '快' },
 ]
 
-export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onModeChange }: TopBarProps) {
+export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onModeChange, displayMode, onDisplayModeChange }: TopBarProps) {
   const [time, setTime] = useState(formatClock())
 
   useEffect(() => {
@@ -78,6 +80,20 @@ export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onM
             >{m}</button>
           ))}
         </div>
+      )}
+
+      {/* Display mode toggle */}
+      {onDisplayModeChange && (
+        <button
+          onClick={() => onDisplayModeChange(displayMode === 'soft' ? 'pigment' : 'soft')}
+          title={displayMode === 'soft' ? '切换颜料模式' : '切换柔和模式'}
+          style={{
+            padding: '3px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.03)', color: '#B8A8D8',
+            fontSize: '0.65rem', fontFamily: 'Inter, sans-serif', cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >{displayMode === 'soft' ? '🌙 柔和' : '🎨 颜料'}</button>
       )}
 
       {/* Right: speed control */}

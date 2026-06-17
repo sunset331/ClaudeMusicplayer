@@ -2,6 +2,7 @@ import { Component, type ReactNode, useState, useCallback } from 'react'
 import { usePlayerStore } from './store/playerStore'
 import { usePlayback } from './hooks/usePlayback'
 import FluidBackground from './components/Background/FluidBackground'
+import SoftBackground from './components/Background/SoftBackground'
 import TopBar from './components/TopBar'
 import LyricsCanvas from './components/Lyrics/LyricsCanvas'
 import ProgressBar from './components/Controls/ProgressBar'
@@ -40,6 +41,8 @@ function PlayerUI() {
   const currentIndex = usePlayerStore((s) => s.currentIndex)
   const mode = usePlayerStore((s) => s.mode)
   const setMode = usePlayerStore((s) => s.setMode)
+  const displayMode = usePlayerStore((s) => s.displayMode)
+  const setDisplayMode = usePlayerStore((s) => s.setDisplayMode)
 
   const [showQueue, setShowQueue] = useState(false)
   const [showChat, setShowChat] = useState(false)
@@ -68,10 +71,24 @@ function PlayerUI() {
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',
       display: 'flex', flexDirection: 'column', background: '#020203' }}>
-      <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
+      {displayMode === 'pigment' ? (
+        <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
+      ) : (
+        <SoftBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
+      )}
 
-      {/* Frosted glass overlay */}
-      <div className="glass-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none' }} />
+      {/* Frosted glass overlay — lighter in soft mode */}
+      <div
+        className={displayMode === 'soft' ? '' : 'glass-overlay'}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
+          ...(displayMode === 'soft' ? {
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            background: 'rgba(2,2,3,0.04)',
+          } : {}),
+        }}
+      />
 
       {/* UI Layer */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex',
@@ -79,7 +96,8 @@ function PlayerUI() {
 
         {/* Top bar: time + speed + mode */}
         <TopBar fluidSpeed={fluidSpeed} onSpeedChange={setFluidSpeed}
-          playCount={playCount} mode={mode} onModeChange={switchMode} />
+          playCount={playCount} mode={mode} onModeChange={switchMode}
+          displayMode={displayMode} onDisplayModeChange={setDisplayMode} />
 
         {/* Floating action buttons */}
         <div style={{ position: 'absolute', left: 20, top: 72, zIndex: 20, display: 'flex', gap: 8 }}>

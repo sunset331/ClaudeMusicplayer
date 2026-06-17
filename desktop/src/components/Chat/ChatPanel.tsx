@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { X, Send } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -47,18 +47,7 @@ export default function ChatPanel({ isOpen, onClose }: ChatPanelProps) {
   }
 
   return (
-    <>
-      <motion.button
-        className="ctrl-btn"
-        onClick={() => onClose?.()}
-        style={{ position: 'absolute', right: 16, top: 80, zIndex: 20 }}
-        whileHover={{ scale: 1.1 }}
-        aria-label="AI 聊天"
-      >
-        <MessageCircle size={16} />
-      </motion.button>
-
-      <AnimatePresence>
+    <AnimatePresence>
         {isOpen && (
           <>
             <motion.div
@@ -153,7 +142,6 @@ export default function ChatPanel({ isOpen, onClose }: ChatPanelProps) {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
-    </>
+    </AnimatePresence>
   )
 }

@@ -1,4 +1,4 @@
-import { Component, type ReactNode, useState } from 'react'
+import { Component, type ReactNode, useState, useCallback } from 'react'
 import { usePlayerStore } from './store/playerStore'
 import { usePlayback } from './hooks/usePlayback'
 import FluidBackground from './components/Background/FluidBackground'
@@ -10,7 +10,7 @@ import VolumeControl from './components/Controls/VolumeControl'
 import QueuePanel from './components/Queue/QueuePanel'
 import ChatPanel from './components/Chat/ChatPanel'
 import ScorePanel from './components/Score/ScorePanel'
-import { ListMusic } from 'lucide-react'
+import { ListMusic, MessageCircle } from 'lucide-react'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) { super(props); this.state = { error: null } }
@@ -53,23 +53,22 @@ function PlayerUI() {
     handleLike,
   } = usePlayback()
 
-  const switchMode = async (newMode: 'rap' | 'mixed') => {
+  const switchMode = useCallback(async (newMode: 'rap' | 'mixed') => {
     await fetch('/api/mode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: newMode }),
     })
     setMode(newMode)
-    // Re-fetch queue
     const res = await fetch('/api/queue')
     const data = await res.json()
     usePlayerStore.getState().setSongs(data.songs)
-  }
+  }, [setMode])
 
-  const addToPlaylist = async () => {
+  const addToPlaylist = useCallback(async () => {
     if (!currentSong) return
     await fetch(`/api/playlist/add/${currentSong.id}`, { method: 'POST' }).catch(() => {})
-  }
+  }, [currentSong])
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',
@@ -96,7 +95,7 @@ function PlayerUI() {
             onClick={() => setShowChat(true)}
             style={{ position: 'absolute', right: 16, top: 80, zIndex: 20 }}
             aria-label="AI 聊天"
-          >💬</button>
+          ><MessageCircle size={16} /></button>
         )}
 
         {/* Score panel */}

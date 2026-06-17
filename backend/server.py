@@ -156,73 +156,98 @@ def _record_feedback(song_id: int, song: dict | None, action: str):
         log.warning("Failed to write history: %s", e)
 
 
-def _ingest_playlist_seed(mode: str):
-    """Pull songs from user's playlist and update taste.json weights."""
-    pid = _find_or_create_playlist(mode)
-    if not pid:
-        log.warning("Cannot ingest playlist — not found for mode=%s", mode)
-        return
+# ── Playlist mapping per mode (multiple playlists supported) ──
+MODE_PLAYLISTS = {
+    "rap": ["Claude Rap", "rap not rape"],
+    "mixed": ["Claude Picks"],
+}
+
+
+def _get_playlist_ids(mode: str) -> list[int]:
+    """Get all playlist IDs for a mode (lookup only, no creation)."""
+    ids = []
     try:
-        # Get all tracks
-        data = ncm("/playlist/detail", {"id": pid})
-        tracks = []
-        if data and "playlist" in data:
-            tracks = data["playlist"].get("tracks", [])
-        if not tracks:
-            log.warning("Playlist empty for mode=%s", mode)
-            return
-        log.info("Ingesting %d tracks from playlist for mode=%s", len(tracks), mode)
-
-        # Load taste.json
-        taste_path = os.path.join(DATA_DIR, "taste.json")
-        taste = {}
-        if os.path.exists(taste_path):
-            with open(taste_path, encoding="utf-8") as f:
-                taste = json.load(f)
-        if "modes" not in taste:
-            taste["modes"] = {}
-        if mode not in taste["modes"]:
-            taste["modes"][mode] = {"artist_weights": {}, "genre_weights": {}, "top_artists": []}
-
-        mt = taste["modes"][mode]
-        if "artist_weights" not in mt:
-            mt["artist_weights"] = {}
-        if "genre_weights" not in mt:
-            mt["genre_weights"] = {}
-
-        # Count artist occurrences
-        artist_count: dict[str, int] = {}
-        genre_count: dict[str, int] = {}
-        for t in tracks:
-            if isinstance(t, dict):
-                # Artists
-                for ar in t.get("ar", []):
-                    name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
-                    if name:
-                        artist_count[name] = artist_count.get(name, 0) + 1
-                # Genre from tags
-                for tag in (t.get("dt", []) or []):
-                    if isinstance(tag, str):
-                        genre_count[tag] = genre_count.get(tag, 0) + 1
-
-        # Update weights (normalize to 0.1-1.0 range)
-        if artist_count:
-            max_c = max(artist_count.values())
-            for name, c in artist_count.items():
-                mt["artist_weights"][name] = max(0.1, min(1.0, (c / max_c)))
-            mt["top_artists"] = sorted(artist_count, key=artist_count.get, reverse=True)[:30]
-        if genre_count:
-            max_g = max(genre_count.values())
-            for tag, c in genre_count.items():
-                mt["genre_weights"][tag] = max(0.05, min(0.7, (c / max_g) * 0.5))
-
-        taste["modes"][mode] = mt
-        with open(taste_path, "w", encoding="utf-8") as f:
-            json.dump(taste, f, ensure_ascii=False, indent=2)
-        log.info("Updated taste.json: %d artists, %d genres for mode=%s",
-                 len(mt["artist_weights"]), len(mt["genre_weights"]), mode)
+        d = ncm("/user/playlist", {"uid": 0})
+        playlists = d.get("playlist", []) if d else []
+        for pl in playlists:
+            if pl.get("name") in MODE_PLAYLISTS.get(mode, []):
+                ids.append(pl.get("id"))
     except Exception as e:
-        log.warning("Playlist ingestion failed for mode=%s: %s", mode, e)
+        log.warning("Playlist lookup failed: %s", e)
+    return ids
+
+
+def _ingest_playlist_seed(mode: str):
+    """Pull songs from all mode playlists and update taste.json weights."""
+    pids = _get_playlist_ids(mode)
+    if not pids:
+        log.warning("No playlists found for mode=%s (looking for: %s)", mode, MODE_PLAYLISTS.get(mode, []))
+        return
+
+    all_tracks = []
+    for pid in pids:
+        try:
+            data = ncm("/playlist/detail", {"id": pid})
+            tracks = []
+            if data and "playlist" in data:
+                tracks = data["playlist"].get("tracks", [])
+            if tracks:
+                all_tracks.extend(tracks)
+                log.info("  + %d tracks from playlist id=%s", len(tracks), pid)
+        except Exception as e:
+            log.warning("Failed to fetch playlist %s: %s", pid, e)
+
+    if not all_tracks:
+        log.warning("All playlists empty for mode=%s", mode)
+        return
+    log.info("Ingesting %d total tracks from %d playlists for mode=%s", len(all_tracks), len(pids), mode)
+
+    # Load taste.json
+    taste_path = os.path.join(DATA_DIR, "taste.json")
+    taste = {}
+    if os.path.exists(taste_path):
+        with open(taste_path, encoding="utf-8") as f:
+            taste = json.load(f)
+    if "modes" not in taste:
+        taste["modes"] = {}
+    if mode not in taste["modes"]:
+        taste["modes"][mode] = {"artist_weights": {}, "genre_weights": {}, "top_artists": []}
+
+    mt = taste["modes"][mode]
+    if "artist_weights" not in mt:
+        mt["artist_weights"] = {}
+    if "genre_weights" not in mt:
+        mt["genre_weights"] = {}
+
+    # Count artist occurrences
+    artist_count: dict[str, int] = {}
+    genre_count: dict[str, int] = {}
+    for t in all_tracks:
+        if isinstance(t, dict):
+            for ar in t.get("ar", []):
+                name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
+                if name:
+                    artist_count[name] = artist_count.get(name, 0) + 1
+            for tag in (t.get("dt", []) or []):
+                if isinstance(tag, str):
+                    genre_count[tag] = genre_count.get(tag, 0) + 1
+
+    # Update weights (normalize to 0.1-1.0 range)
+    if artist_count:
+        max_c = max(artist_count.values())
+        for name, c in artist_count.items():
+            mt["artist_weights"][name] = max(0.1, min(1.0, (c / max_c)))
+        mt["top_artists"] = sorted(artist_count, key=artist_count.get, reverse=True)[:30]
+    if genre_count:
+        max_g = max(genre_count.values())
+        for tag, c in genre_count.items():
+            mt["genre_weights"][tag] = max(0.05, min(0.7, (c / max_g) * 0.5))
+
+    taste["modes"][mode] = mt
+    with open(taste_path, "w", encoding="utf-8") as f:
+        json.dump(taste, f, ensure_ascii=False, indent=2)
+    log.info("Updated taste.json: %d artists, %d genres for mode=%s",
+             len(mt["artist_weights"]), len(mt["genre_weights"]), mode)
 
 
 def _daily_refresh(force: bool = False):
@@ -264,18 +289,21 @@ def _daily_refresh(force: bool = False):
 
 
 def _find_or_create_playlist(mode: str) -> int | None:
-    """Find or create NetEase playlist. Mirrors app.py _find_playlist()."""
+    """Find or create the PRIMARY playlist for a mode (first in MODE_PLAYLISTS list)."""
     try:
+        targets = MODE_PLAYLISTS.get(mode, [])
+        if not targets:
+            return None
+        primary = targets[0]  # Only auto-create the primary playlist
         d = ncm("/user/playlist", {"uid": 0})
         playlists = d.get("playlist", []) if d else []
         pid = None
-        target = "Claude Rap" if mode == "rap" else "Claude Picks"
         for pl in playlists:
-            if pl.get("name") == target:
+            if pl.get("name") == primary:
                 pid = pl.get("id")
                 break
         if not pid:
-            d2 = ncm("/playlist/create", {"name": target, "privacy": 0})
+            d2 = ncm("/playlist/create", {"name": primary, "privacy": 0})
             if d2:
                 pid = d2.get("id") or d2.get("playlist", {}).get("id")
         return pid

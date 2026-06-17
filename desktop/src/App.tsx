@@ -10,7 +10,7 @@ import VolumeControl from './components/Controls/VolumeControl'
 import QueuePanel from './components/Queue/QueuePanel'
 import ChatPanel from './components/Chat/ChatPanel'
 import ScorePanel from './components/Score/ScorePanel'
-import { ListMusic, MessageCircle } from 'lucide-react'
+import { ListMusic, MessageCircle, RefreshCw } from 'lucide-react'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) { super(props); this.state = { error: null } }
@@ -86,6 +86,10 @@ function PlayerUI() {
           <button onClick={() => setShowQueue(!showQueue)}
             style={iconBtnStyle} aria-label="播放列表">
             <ListMusic size={16} />
+          </button>
+          <button onClick={() => fetch('/api/rebuild', { method: 'POST' }).then(() => fetch('/api/queue').then(r => r.json()).then(d => usePlayerStore.getState().setSongs(d.songs)))}
+            style={iconBtnStyle} aria-label="刷新推荐" title="手动刷新推荐列表">
+            <RefreshCw size={14} />
           </button>
         </div>
 

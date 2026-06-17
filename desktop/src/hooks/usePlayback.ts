@@ -61,6 +61,30 @@ export function usePlayback() {
     return () => clearInterval(interval)
   }, [playbackState, syncLyricIndex])
 
+  // ── Dwell detection: trigger smart-insert when >80% listened ──
+  const dwellFiredRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (playbackState !== 'playing' || !currentSong || duration <= 0) {
+      dwellFiredRef.current = null
+      return
+    }
+    const pct = currentTime / duration
+    if (pct > 0.8 && dwellFiredRef.current !== currentSong.id) {
+      dwellFiredRef.current = currentSong.id
+      fetch('/api/smart-insert', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'dwell' }),
+      }).then(r => r.json()).then(data => {
+        if (data.inserted?.length) {
+          const curSongs = [...usePlayerStore.getState().songs]
+          const idx = usePlayerStore.getState().currentIndex
+          curSongs.splice(idx + 1, 0, ...data.inserted)
+          usePlayerStore.getState().setSongs(curSongs)
+        }
+      }).catch(() => {})
+    }
+  }, [currentTime, duration, playbackState, currentSong?.id])
+
   // ── Keyboard shortcuts ──
   useKeyboard({
     Space: () => togglePlay(),
@@ -122,15 +146,46 @@ export function usePlayback() {
     audioEngine.toggleMute()
   }, [toggleMute])
 
-  const handleLike = useCallback(() => {
+  const handleLike = useCallback(async () => {
     const s = usePlayerStore.getState()
     if (!s.currentSong) return
     fetch(`/api/like/${s.currentSong.id}`, { method: 'POST' }).catch(() => {})
     s.setShaderMood('excited')
     setTimeout(() => s.setShaderMood('normal'), 3000)
+    // Smart insert: 2 similar songs after like
+    try {
+      const res = await fetch('/api/smart-insert', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'like' }),
+      })
+      const data = await res.json()
+      if (data.inserted?.length) {
+        const curSongs = [...usePlayerStore.getState().songs]
+        const idx = usePlayerStore.getState().currentIndex
+        curSongs.splice(idx + 1, 0, ...data.inserted)
+        usePlayerStore.getState().setSongs(curSongs)
+      }
+    } catch {}
   }, [])
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = useCallback(async () => {
+    const s = usePlayerStore.getState()
+    if (s.currentSong) {
+      // Smart insert: 2 different songs after skip
+      try {
+        const res = await fetch('/api/smart-insert', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trigger: 'skip' }),
+        })
+        const data = await res.json()
+        if (data.inserted?.length) {
+          const curSongs = [...usePlayerStore.getState().songs]
+          const idx = usePlayerStore.getState().currentIndex
+          curSongs.splice(idx + 1, 0, ...data.inserted)
+          usePlayerStore.getState().setSongs(curSongs)
+        }
+      } catch {}
+    }
     nextSong()
   }, [nextSong])
 

@@ -534,30 +534,199 @@ async def stream_audio(song_id: int):
 
 # ── Chat ──
 
+def _load_chat_context():
+    """Load history, taste, song_stats for AI chat context."""
+    history = {}
+    taste = {}
+    try:
+        hp = os.path.join(DATA_DIR, "history.json")
+        if os.path.exists(hp):
+            with open(hp, encoding="utf-8") as f:
+                history = json.load(f)
+    except Exception:
+        pass
+    try:
+        tp = os.path.join(DATA_DIR, "taste.json")
+        if os.path.exists(tp):
+            with open(tp, encoding="utf-8") as f:
+                taste = json.load(f)
+    except Exception:
+        pass
+    # Build song_stats for current song
+    song_stats = {}
+    with _read_state() as st:
+        song = _current_song(st)
+        if song:
+            sid = str(song.get("songid", ""))
+            plays = history.get("song_plays", {}).get(sid, {})
+            song_stats = {
+                "playCount": plays.get("count", 0),
+                "lastPlayed": plays.get("last_played", "never"),
+                "liked": plays.get("liked", False),
+                "skipped": plays.get("skipped", False),
+            }
+    return history, taste, song_stats, song
+
+
 @app.post("/api/chat/message")
 async def chat_message(body: dict):
-    """Send a message to AI companion. Returns {reply, signals}."""
+    """Send a message to AI companion with real context."""
     text = body.get("text", "")
     if not text.strip():
         return {"reply": "", "signals": []}
     try:
-        with _read_state() as st:
-            song = _current_song(st)
+        history, taste, song_stats, song = _load_chat_context()
         reply, signals = chat_mod.send_message(
-            text,
-            song,
-            [],  # history managed by client for simplicity
-            {},
-            {},
-            {},
+            text, song, [], history, taste, song_stats,
         )
-        # Check for skip command
         should_skip = "[切歌]" in (reply or "")
         reply_clean = reply.replace("[切歌]", "").strip() if reply else ""
-        return {"reply": reply_clean, "signals": signals, "shouldSkip": should_skip}
+
+        # Handle song requests from chat signals
+        inserted = _handle_chat_signals(signals, text)
+
+        return {
+            "reply": reply_clean,
+            "signals": signals,
+            "shouldSkip": should_skip,
+            "inserted": inserted,
+        }
     except Exception as e:
         log.warning("Chat error: %s", e)
         return {"reply": "沧溟正在休息，请稍后再试...", "signals": []}
+
+
+def _handle_chat_signals(signals: list, text: str) -> list:
+    """Process chat signals: handle song requests, insert songs into queue."""
+    inserted = []
+    # Check for song requests (e.g., "来三首周杰伦的歌")
+    try:
+        req = chat_mod.extract_song_request(text)
+        if req:
+            query, count, artist = req
+            count = min(count or 3, 5)
+            log.info("Song request: query=%s count=%d artist=%s", query, count, artist)
+            results = eng.search_songs(query, count + 5) if hasattr(eng, 'search_songs') else []
+            if not results:
+                # Fallback: search via ncm
+                data = ncm("/search", {"keywords": query, "limit": count + 5, "type": 1})
+                results = []
+                if data and "result" in data:
+                    for s in data["result"].get("songs", [])[:count + 5]:
+                        results.append({
+                            "songid": s.get("id"), "songname": s.get("name"),
+                            "singer": s.get("ar", []), "albumname": s.get("al", {}).get("name", ""),
+                            "albumid": s.get("al", {}).get("id", 0),
+                            "duration": s.get("dt", 0), "_score": 0.99, "_sources": ["chat_request"],
+                            "_played": False,
+                        })
+            if results:
+                with _read_state() as st:
+                    songs = list(st["songs"])
+                    idx = st["current_idx"]
+                    # Score and insert after current song
+                    for r in results[:count]:
+                        r["_score"] = 0.99
+                        r["_sources"] = ["chat_request"]
+                        r["_played"] = False
+                        songs.insert(idx + 1, r)
+                        inserted.append(_song_to_dict(r))
+                        idx += 1
+                    st["songs"] = songs
+                log.info("Inserted %d songs from chat request", len(inserted))
+    except Exception as e:
+        log.warning("Song request handling failed: %s", e)
+    return inserted
+
+
+@app.post("/api/smart-insert")
+async def smart_insert(body: dict):
+    """Behavior-based smart insertion: skip/dwell triggers 2-3 song insert."""
+    trigger = body.get("trigger", "skip")  # "skip" | "dwell" | "like"
+    with _read_state() as st:
+        song = _current_song(st)
+        if not song:
+            return {"inserted": []}
+        sid = str(song.get("songid", ""))
+        songs = list(st["songs"])
+        idx = st["current_idx"]
+
+    inserted = []
+    try:
+        if trigger == "skip":
+            # Find opposite style songs (different from skipped artist)
+            skip_artist = ""
+            singer = song.get("singer", [])
+            if singer:
+                skip_artist = singer[0].get("name", "") if isinstance(singer[0], dict) else str(singer[0])
+            # Search for songs NOT by this artist
+            if skip_artist:
+                data = ncm("/search", {"keywords": skip_artist, "limit": 10, "type": 1})
+                if data and "result" in data:
+                    # Get similar songs from NetEase's simi endpoint
+                    simi = ncm("/simi/song", {"id": song.get("songid")})
+                    alt_songs = []
+                    if simi and "songs" in simi:
+                        for s in simi["songs"][:5]:
+                            ar_name = s.get("artists", [{}])[0].get("name", "") if s.get("artists") else ""
+                            if ar_name != skip_artist:
+                                alt_songs.append({
+                                    "songid": s.get("id"), "songname": s.get("name"),
+                                    "singer": [{"name": ar_name}], "albumname": "",
+                                    "albumid": 0, "duration": s.get("duration", 0) * 1000,
+                                    "_score": 0.85, "_sources": ["smart_skip"], "_played": False,
+                                })
+                    # Insert 2 alternative songs
+                    for s in alt_songs[:2]:
+                        with _read_state() as st:
+                            st["songs"].insert(st["current_idx"] + 1, s)
+                        inserted.append(_song_to_dict(s))
+
+        elif trigger == "dwell":
+            # User listened through — find more from same artist
+            singer = song.get("singer", [])
+            artist_name = singer[0].get("name", "") if singer and isinstance(singer[0], dict) else ""
+            if artist_name:
+                data = ncm("/search", {"keywords": artist_name, "limit": 8, "type": 1})
+                if data and "result" in data:
+                    for s in data["result"].get("songs", [])[:3]:
+                        if s.get("id") != song.get("songid"):
+                            new_song = {
+                                "songid": s.get("id"), "songname": s.get("name"),
+                                "singer": s.get("ar", []), "albumname": s.get("al", {}).get("name", ""),
+                                "albumid": s.get("al", {}).get("id", 0),
+                                "duration": s.get("dt", 0), "_score": 0.88,
+                                "_sources": ["smart_dwell"], "_played": False,
+                            }
+                            with _read_state() as st:
+                                st["songs"].insert(st["current_idx"] + 1, new_song)
+                            inserted.append(_song_to_dict(new_song))
+                            if len(inserted) >= 3:
+                                break
+
+        elif trigger == "like":
+            # User liked — find similar songs, boost artist weight
+            _record_feedback(song.get("songid"), song, "like")
+            simi = ncm("/simi/song", {"id": song.get("songid")})
+            if simi and "songs" in simi:
+                for s in simi["songs"][:2]:
+                    ar_name = s.get("artists", [{}])[0].get("name", "") if s.get("artists") else ""
+                    new_song = {
+                        "songid": s.get("id"), "songname": s.get("name"),
+                        "singer": [{"name": ar_name}], "albumname": "",
+                        "albumid": 0, "duration": s.get("duration", 0) * 1000,
+                        "_score": 0.92, "_sources": ["smart_like"], "_played": False,
+                    }
+                    with _read_state() as st:
+                        st["songs"].insert(st["current_idx"] + 1, new_song)
+                    inserted.append(_song_to_dict(new_song))
+
+        if inserted:
+            log.info("Smart insert (%s): %d songs after current", trigger, len(inserted))
+    except Exception as e:
+        log.warning("Smart insert failed: %s", e)
+
+    return {"inserted": inserted}
 
 
 @app.post("/api/mode")

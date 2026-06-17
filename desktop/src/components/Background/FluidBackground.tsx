@@ -20,20 +20,26 @@ function fbm(x: number, y: number, t: number, seed: number): number {
 }
 
 export default function FluidBackground({ speed = 'medium', mood = 'normal', displayMode = 'pigment' }: FluidBackgroundProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null)
+  const rippleCanvasRef = useRef<HTMLCanvasElement>(null)
   const cfg = SPEED_CONFIG[speed]
   const intensity = mood === 'excited' ? 1.3 : mood === 'calm' ? 0.7 : 1.0
   const modeRef = useRef(displayMode)
   modeRef.current = displayMode
 
   useEffect(() => {
-    const canvas = canvasRef.current
+    const canvas = bgCanvasRef.current
+    const rippleCvs = rippleCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    const rctx = rippleCvs?.getContext('2d')
     if (!ctx) return
     let animId: number, time = 0
 
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    const resize = () => {
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight
+      if (rippleCvs) { rippleCvs.width = window.innerWidth; rippleCvs.height = window.innerHeight }
+    }
     resize(); window.addEventListener('resize', resize)
 
     // ── Pigment state ──
@@ -94,32 +100,37 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
         mg.addColorStop(0, '#8098b0'); mg.addColorStop(0.3, '#405060'); mg.addColorStop(1, 'transparent')
         ctx.fillStyle = mg; ctx.fillRect(0, 0, w, h); ctx.restore()
 
-        // Spawn drops
-        dropTimer += 0.016; const interval = 2.5 + Math.random() * 1.5  // 2.5-4s between drops
-        if (dropTimer > interval && raindrops.length < 1) { dropTimer = 0; spawnDrop(w, h) }
+        // ── Foreground ripple layer (rctx) — renders on top of lyrics ──
+        if (rctx) {
+          rctx.clearRect(0, 0, w, h)
 
-        // Falling drops
-        for (let i = raindrops.length - 1; i >= 0; i--) {
-          const d = raindrops[i]; d.progress += 0.016 * d.spd * 3
-          if (d.progress < 0.85) {
-            const dy = -20 + (d.y + 20) * d.progress
-            ctx.save(); ctx.globalAlpha = 0.25 * (1 - d.progress); ctx.strokeStyle = '#a0b8d0'; ctx.lineWidth = 1
-            ctx.beginPath(); ctx.moveTo(d.x, dy); ctx.lineTo(d.x, dy + 6); ctx.stroke(); ctx.restore()
-          }
-          if (d.progress >= 1) {
-            ripples.push({ x: d.x, y: d.y, maxR: 150 + Math.random() * 200, r: 0, alpha: 0.5, lw: 1.5, phase: 0 })
-            raindrops.splice(i, 1)
-          }
-        }
+          // Spawn drops
+          dropTimer += 0.016; const interval = 2.5 + Math.random() * 1.5
+          if (dropTimer > interval && raindrops.length < 1) { dropTimer = 0; spawnDrop(w, h) }
 
-        // Ripples
-        for (let i = ripples.length - 1; i >= 0; i--) {
-          const rp = ripples[i]; rp.phase += 0.012; rp.r += 0.35 * (1 - rp.phase * 0.7); rp.alpha -= 0.004
-          if (rp.alpha <= 0 || rp.r > rp.maxR) { ripples.splice(i, 1); continue }
-          ctx.save(); ctx.globalAlpha = rp.alpha; ctx.strokeStyle = '#8098b0'; ctx.lineWidth = rp.lw * (1 - rp.phase * 0.6)
-          ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2); ctx.stroke()
-          if (rp.r > 8) { ctx.globalAlpha = rp.alpha * 0.4; ctx.lineWidth = rp.lw * 0.6; ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r * 0.55, 0, Math.PI * 2); ctx.stroke() }
-          ctx.restore()
+          // Falling drops
+          for (let i = raindrops.length - 1; i >= 0; i--) {
+            const d = raindrops[i]; d.progress += 0.016 * d.spd * 3
+            if (d.progress < 0.85) {
+              const dy = -20 + (d.y + 20) * d.progress
+              rctx.save(); rctx.globalAlpha = 0.3 * (1 - d.progress); rctx.strokeStyle = '#c0d8f0'; rctx.lineWidth = 1.2
+              rctx.beginPath(); rctx.moveTo(d.x, dy); rctx.lineTo(d.x, dy + 8); rctx.stroke(); rctx.restore()
+            }
+            if (d.progress >= 1) {
+              ripples.push({ x: d.x, y: d.y, maxR: 150 + Math.random() * 200, r: 0, alpha: 0.5, lw: 1.5, phase: 0 })
+              raindrops.splice(i, 1)
+            }
+          }
+
+          // Ripples — visible above lyrics glass
+          for (let i = ripples.length - 1; i >= 0; i--) {
+            const rp = ripples[i]; rp.phase += 0.012; rp.r += 0.35 * (1 - rp.phase * 0.7); rp.alpha -= 0.004
+            if (rp.alpha <= 0 || rp.r > rp.maxR) { ripples.splice(i, 1); continue }
+            rctx.save(); rctx.globalAlpha = rp.alpha; rctx.strokeStyle = '#a0c8e0'; rctx.lineWidth = rp.lw * (1 - rp.phase * 0.6)
+            rctx.beginPath(); rctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2); rctx.stroke()
+            if (rp.r > 8) { rctx.globalAlpha = rp.alpha * 0.4; rctx.lineWidth = rp.lw * 0.6; rctx.beginPath(); rctx.arc(rp.x, rp.y, rp.r * 0.55, 0, Math.PI * 2); rctx.stroke() }
+            rctx.restore()
+          }
         }
 
         // Vignette
@@ -200,7 +211,13 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: displayMode === 'soft' ? '#0a1628' : COLORS.bg, overflow: 'hidden' }}>
-      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
+      <canvas ref={bgCanvasRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
+      {displayMode === 'soft' && (
+        <canvas ref={rippleCanvasRef} style={{
+          width: '100%', height: '100%', position: 'fixed', inset: 0,
+          zIndex: 15, pointerEvents: 'none',
+        }} />
+      )}
       {displayMode === 'pigment' && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
           background: 'radial-gradient(ellipse at center, transparent 40%, rgba(2,2,3,0.5) 100%)' }} />

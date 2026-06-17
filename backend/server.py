@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 import requests as http_requests
 
 import engine as eng
+import chat as chat_mod
 from api.ncm_client import ncm
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(message)s")
@@ -315,6 +316,75 @@ async def stream_audio(song_id: int):
             log.warning("Stream error for %d: %s", song_id, e)
 
     return StreamingResponse(generate(), media_type="audio/mpeg")
+
+# ── Chat ──
+
+@app.post("/api/chat/message")
+async def chat_message(body: dict):
+    """Send a message to AI companion. Returns {reply, signals}."""
+    text = body.get("text", "")
+    if not text.strip():
+        return {"reply": "", "signals": []}
+    try:
+        with _read_state() as st:
+            song = _current_song(st)
+        reply, signals = chat_mod.send_message(
+            text,
+            song,
+            [],  # history managed by client for simplicity
+            {},
+            {},
+            {},
+        )
+        # Check for skip command
+        should_skip = "[切歌]" in (reply or "")
+        reply_clean = reply.replace("[切歌]", "").strip() if reply else ""
+        return {"reply": reply_clean, "signals": signals, "shouldSkip": should_skip}
+    except Exception as e:
+        log.warning("Chat error: %s", e)
+        return {"reply": "沧溟正在休息，请稍后再试...", "signals": []}
+
+
+@app.post("/api/mode")
+async def switch_mode(body: dict):
+    """Switch between rap/mixed mode."""
+    new_mode = body.get("mode", "rap")
+    if new_mode not in ("rap", "mixed"):
+        return {"ok": False, "error": "Invalid mode"}
+    with _read_state() as st:
+        st["mode"] = new_mode
+        st["songs"] = []
+        st["current_idx"] = 0
+    _save_state()
+    # Load candidates for new mode
+    try:
+        data = eng.load_candidates(new_mode)
+        if data:
+            songs = data.get("songs", data) if isinstance(data, dict) else data
+            if isinstance(songs, list):
+                with _read_state() as st:
+                    st["candidates"] = songs
+                    st["songs"] = [s for s in songs if not s.get("_played")]
+    except Exception as e:
+        log.warning("Mode switch load failed: %s", e)
+    return {"ok": True, "mode": new_mode}
+
+
+@app.post("/api/playlist/add/{song_id}")
+async def add_to_playlist(song_id: int):
+    """Add song to NetEase playlist."""
+    try:
+        with _read_state() as st:
+            mode = st["mode"]
+        pid_key = "playlist_rap" if mode == "rap" else "playlist_mixed"
+        pid = _state.get(pid_key)
+        if not pid:
+            return {"ok": False, "error": "Playlist not found. Login first."}
+        ncm("/playlist/tracks", {"op": "add", "pid": pid, "tracks": str(song_id)})
+        return {"ok": True}
+    except Exception as e:
+        log.warning("Add to playlist failed: %s", e)
+        return {"ok": False, "error": str(e)}
 
 # ── Serve React build as SPA ──
 # Mount assets directory

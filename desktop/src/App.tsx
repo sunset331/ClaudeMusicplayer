@@ -72,18 +72,10 @@ function PlayerUI() {
       display: 'flex', flexDirection: 'column', background: '#020203' }}>
       <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} displayMode={displayMode} />
 
-      {/* Frosted glass overlay — lighter in soft mode */}
-      <div
-        className={displayMode === 'soft' ? '' : 'glass-overlay'}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
-          ...(displayMode === 'soft' ? {
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            background: 'rgba(2,2,3,0.04)',
-          } : {}),
-        }}
-      />
+      {/* Frosted glass overlay — only in pigment mode */}
+      {displayMode === 'pigment' && (
+        <div className="glass-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none' }} />
+      )}
 
       {/* UI Layer */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex',

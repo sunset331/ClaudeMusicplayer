@@ -93,7 +93,7 @@ export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onM
             fontSize: '0.65rem', fontFamily: 'Inter, sans-serif', cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
-        >{displayMode === 'soft' ? '🌙 柔和' : '🎨 颜料'}</button>
+        >{displayMode === 'soft' ? '🌧 涟漪' : '🎨 颜料'}</button>
       )}
 
       {/* Right: speed control */}

@@ -74,7 +74,7 @@ function PlayerUI() {
       {displayMode === 'pigment' ? (
         <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
       ) : (
-        <SoftBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
+        <SoftBackground speed={fluidSpeed} />
       )}
 
       {/* Frosted glass overlay — lighter in soft mode */}

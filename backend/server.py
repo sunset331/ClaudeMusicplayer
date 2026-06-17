@@ -48,6 +48,7 @@ _state = {
     "epsilon": 0.15,
     "play_count": 0,
     "lyrics_cache": {},
+    "_current_lyrics": [],
 }
 _state_lock = threading.RLock()
 
@@ -468,6 +469,7 @@ async def get_lyrics(song_id: int):
         lines.sort(key=lambda x: x["time"])
         with _read_state() as st:
             st["lyrics_cache"][song_id] = lines
+            st["_current_lyrics"] = lines
         return {"lyrics": lines}
     except Exception as e:
         log.warning("Lyrics for song %d: %s", song_id, e)
@@ -979,6 +981,15 @@ if __name__ == "__main__":
     _thr.Thread(target=_run_tray, daemon=True).start()
     _thr.Thread(target=_run_hotkeys, daemon=True).start()
     _thr.Thread(target=_run_taskbar, daemon=True).start()
+
+    # Desktop lyrics
+    try:
+        from backend.desktop_lyrics import DesktopLyrics
+        _lyrics = DesktopLyrics(lambda: _state)
+        _lyrics.start()
+        log.info("Desktop lyrics started")
+    except Exception as e:
+        log.warning("Desktop lyrics failed: %s", e)
 
     log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

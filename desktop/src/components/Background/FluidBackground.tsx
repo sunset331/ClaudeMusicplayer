@@ -46,15 +46,22 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
     const ripples: { x: number; y: number; maxR: number; r: number; alpha: number; lw: number; phase: number }[] = []
     const raindrops: { x: number; y: number; progress: number; spd: number }[] = []
     let dropTimer = 0
-    const spawnDrop = (w: number, h: number) => {
-      raindrops.push({ x: Math.random() * w, y: Math.random() * h * 0.7 + h * 0.1, progress: 0, spd: 0.4 + Math.random() * 0.6 })
+    // Center-biased random: higher probability near center
+    const centerRand = (range: number) => {
+      const u = Math.random() + Math.random() // triangular distribution, peaks at center
+      return (u / 2) * range
     }
-    // Seed initial ripples
-    for (let i = 0; i < 6; i++) spawnDrop(canvas.width, canvas.height)
-    for (let i = 0; i < 6; i++) ripples.push({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.6 + canvas.height * 0.2,
-      maxR: 40 + Math.random() * 80, r: 10 + Math.random() * 40,
-      alpha: 0.2 + Math.random() * 0.3, lw: 1 + Math.random(), phase: Math.random() * 0.5,
+    const spawnDrop = (w: number, h: number) => {
+      const x = w * 0.15 + centerRand(w * 0.7)  // bias toward horizontal center
+      const y = h * 0.15 + centerRand(h * 0.5)  // bias toward upper-center
+      raindrops.push({ x, y, progress: 0, spd: 0.3 + Math.random() * 0.4 })
+    }
+    // Seed 1 initial ripple (not 6)
+    ripples.push({
+      x: canvas.width * 0.3 + centerRand(canvas.width * 0.4),
+      y: canvas.height * 0.2 + centerRand(canvas.height * 0.4),
+      maxR: 150 + Math.random() * 200, r: 0,
+      alpha: 0.4, lw: 1.5, phase: 0,
     })
 
     const animate = () => {
@@ -88,8 +95,8 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
         ctx.fillStyle = mg; ctx.fillRect(0, 0, w, h); ctx.restore()
 
         // Spawn drops
-        dropTimer += 0.016; const interval = 0.8
-        if (dropTimer > interval && raindrops.length < 30) { dropTimer = 0; spawnDrop(w, h); if (raindrops.length < 15) spawnDrop(w, h) }
+        dropTimer += 0.016; const interval = 2.5 + Math.random() * 1.5  // 2.5-4s between drops
+        if (dropTimer > interval && raindrops.length < 1) { dropTimer = 0; spawnDrop(w, h) }
 
         // Falling drops
         for (let i = raindrops.length - 1; i >= 0; i--) {
@@ -100,14 +107,14 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
             ctx.beginPath(); ctx.moveTo(d.x, dy); ctx.lineTo(d.x, dy + 6); ctx.stroke(); ctx.restore()
           }
           if (d.progress >= 1) {
-            ripples.push({ x: d.x, y: d.y, maxR: 30 + Math.random() * 60, r: 0, alpha: 0.5, lw: 1.5 + Math.random() * 1.5, phase: 0 })
+            ripples.push({ x: d.x, y: d.y, maxR: 150 + Math.random() * 200, r: 0, alpha: 0.5, lw: 1.5, phase: 0 })
             raindrops.splice(i, 1)
           }
         }
 
         // Ripples
         for (let i = ripples.length - 1; i >= 0; i--) {
-          const rp = ripples[i]; rp.phase += 0.04; rp.r += 1.3 * (1 - rp.phase * 0.7); rp.alpha -= 0.013
+          const rp = ripples[i]; rp.phase += 0.012; rp.r += 0.35 * (1 - rp.phase * 0.7); rp.alpha -= 0.004
           if (rp.alpha <= 0 || rp.r > rp.maxR) { ripples.splice(i, 1); continue }
           ctx.save(); ctx.globalAlpha = rp.alpha; ctx.strokeStyle = '#8098b0'; ctx.lineWidth = rp.lw * (1 - rp.phase * 0.6)
           ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2); ctx.stroke()

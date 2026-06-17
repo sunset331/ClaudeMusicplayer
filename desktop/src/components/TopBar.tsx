@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { formatClock } from '../lib/utils'
-import type { FluidSpeed } from '../types'
+import type { FluidSpeed, AppMode } from '../types'
 
 interface TopBarProps {
   fluidSpeed: FluidSpeed
   onSpeedChange: (speed: FluidSpeed) => void
   playCount?: number
+  mode?: AppMode
+  onModeChange?: (mode: AppMode) => void
 }
 
 const SPEEDS: { key: FluidSpeed; label: string }[] = [
@@ -15,7 +17,7 @@ const SPEEDS: { key: FluidSpeed; label: string }[] = [
   { key: 'fast', label: '快' },
 ]
 
-export default function TopBar({ fluidSpeed, onSpeedChange, playCount }: TopBarProps) {
+export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onModeChange }: TopBarProps) {
   const [time, setTime] = useState(formatClock())
 
   useEffect(() => {
@@ -57,6 +59,26 @@ export default function TopBar({ fluidSpeed, onSpeedChange, playCount }: TopBarP
           </span>
         )}
       </div>
+
+      {/* Center: mode switch */}
+      {mode && onModeChange && (
+        <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 2 }}>
+          {(['rap', 'mixed'] as AppMode[]).map((m) => (
+            <button key={m}
+              onClick={() => onModeChange(m)}
+              style={{
+                padding: '3px 14px', borderRadius: 8, border: 'none',
+                background: mode === m ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: mode === m ? '#F5F0FF' : '#706090',
+                fontSize: '0.65rem', fontFamily: 'Inter, sans-serif',
+                fontWeight: mode === m ? 500 : 400,
+                cursor: 'pointer', transition: 'all 0.2s ease',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+              }}
+            >{m}</button>
+          ))}
+        </div>
+      )}
 
       {/* Right: speed control */}
       <div className="flex items-center gap-4">

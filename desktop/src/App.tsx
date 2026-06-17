@@ -21,7 +21,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
         <div style={{ width: '100vw', height: '100vh', background: '#020203', display: 'flex',
           flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           color: '#F5F0FF', fontFamily: 'Inter, sans-serif', padding: 48 }}>
-          <h1 style={{ color: '#FF1413', fontSize: '1.5rem', marginBottom: 16 }}>Render Error</h1>
+          <h1 style={{ fontSize: '1.5rem', marginBottom: 16, fontWeight: 500 }}>Something went wrong</h1>
           <pre style={{ color: '#B8A8D8', fontSize: '0.8rem', maxWidth: 600, whiteSpace: 'pre-wrap',
             background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 12 }}>
             {this.state.error.message}{'\n\n'}{this.state.error.stack}</pre>
@@ -34,7 +34,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 function PlayerUI() {
   const fluidSpeed = usePlayerStore((s) => s.fluidSpeed)
-  const shaderMood = usePlayerStore((s) => s.shaderMood)
   const setFluidSpeed = usePlayerStore((s) => s.setFluidSpeed)
   const playCount = usePlayerStore((s) => s.playCount)
   const songs = usePlayerStore((s) => s.songs)
@@ -49,82 +48,67 @@ function PlayerUI() {
     playbackState, currentTime, duration, volume, isMuted,
     lyrics, currentLyricIndex, currentSong,
     togglePlay, nextSong, prevSong, play,
-    seekTo, changeVolume, toggleMuteAudio,
-    handleLike,
+    seekTo, changeVolume, toggleMuteAudio, handleLike,
   } = usePlayback()
 
   const switchMode = useCallback(async (newMode: 'rap' | 'mixed') => {
-    await fetch('/api/mode', {
-      method: 'POST',
+    await fetch('/api/mode', { method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: newMode }),
-    })
+      body: JSON.stringify({ mode: newMode }) })
     setMode(newMode)
     const res = await fetch('/api/queue')
-    const data = await res.json()
-    usePlayerStore.getState().setSongs(data.songs)
+    usePlayerStore.getState().setSongs((await res.json()).songs)
   }, [setMode])
 
   const addToPlaylist = useCallback(async () => {
     if (!currentSong) return
-    await fetch(`/api/playlist/add/${currentSong.id}`, { method: 'POST' }).catch(() => {})
+    fetch(`/api/playlist/add/${currentSong.id}`, { method: 'POST' }).catch(() => {})
   }, [currentSong])
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',
       display: 'flex', flexDirection: 'column', background: '#020203' }}>
-      <FluidBackground speed={fluidSpeed} mood={shaderMood} />
+      <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
 
-      <div style={{ position: 'fixed', inset: 0, zIndex: 1,
-        background: 'rgba(2,2,3,0.12)', backdropFilter: 'blur(80px)',
-        WebkitBackdropFilter: 'blur(80px)', pointerEvents: 'none' }} />
+      {/* Glass overlay */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
+        background: 'rgba(2,2,3,0.10)', backdropFilter: 'blur(80px)',
+        WebkitBackdropFilter: 'blur(80px)' }} />
 
+      {/* UI Layer */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex',
         flexDirection: 'column', height: '100%', width: '100%' }}>
-        <TopBar fluidSpeed={fluidSpeed} onSpeedChange={setFluidSpeed} playCount={playCount} />
 
-        {/* Left: Queue toggle */}
-        <button onClick={() => setShowQueue(!showQueue)} className="ctrl-btn"
-          style={{ position: 'absolute', left: 16, top: 80, zIndex: 20 }}
-          aria-label="播放列表"><ListMusic size={16} /></button>
+        {/* Top bar: time + speed + mode */}
+        <TopBar fluidSpeed={fluidSpeed} onSpeedChange={setFluidSpeed}
+          playCount={playCount} mode={mode} onModeChange={switchMode} />
 
-        {/* Right: Chat toggle */}
-        <ChatPanel isOpen={showChat} onClose={() => setShowChat(false)} />
-        {!showChat && (
-          <button className="ctrl-btn"
-            onClick={() => setShowChat(true)}
-            style={{ position: 'absolute', right: 16, top: 80, zIndex: 20 }}
-            aria-label="AI 聊天"
-          ><MessageCircle size={16} /></button>
-        )}
+        {/* Floating action buttons */}
+        <div style={{ position: 'absolute', left: 20, top: 72, zIndex: 20, display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowQueue(!showQueue)}
+            style={iconBtnStyle} aria-label="播放列表">
+            <ListMusic size={16} />
+          </button>
+        </div>
+
+        <div style={{ position: 'absolute', right: 20, top: 72, zIndex: 20 }}>
+          {!showChat && (
+            <button onClick={() => setShowChat(true)}
+              style={iconBtnStyle} aria-label="AI 聊天">
+              <MessageCircle size={16} />
+            </button>
+          )}
+        </div>
 
         {/* Score panel */}
         <ScorePanel song={currentSong} />
 
-        {/* Mode switch */}
-        <div style={{ position: 'absolute', left: 72, top: 80, zIndex: 20, display: 'flex', gap: 4 }}>
-          <button
-            onClick={() => switchMode('rap')}
-            style={{
-              padding: '4px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
-              background: mode === 'rap' ? 'rgba(255,255,255,0.1)' : 'transparent',
-              color: mode === 'rap' ? '#F5F0FF' : '#706090',
-              fontSize: '0.7rem', fontFamily: 'Inter, sans-serif', cursor: 'pointer',
-            }}
-          >RAP</button>
-          <button
-            onClick={() => switchMode('mixed')}
-            style={{
-              padding: '4px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
-              background: mode === 'mixed' ? 'rgba(255,255,255,0.1)' : 'transparent',
-              color: mode === 'mixed' ? '#F5F0FF' : '#706090',
-              fontSize: '0.7rem', fontFamily: 'Inter, sans-serif', cursor: 'pointer',
-            }}
-          >MIXED</button>
-        </div>
+        {/* Chat panel */}
+        <ChatPanel isOpen={showChat} onClose={() => setShowChat(false)} />
 
+        {/* Center: Lyrics */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', padding: '0 48px' }}>
+          justifyContent: 'center', padding: '0 64px' }}>
           <LyricsCanvas
             lyrics={lyrics} currentIndex={currentLyricIndex}
             isPlaying={playbackState === 'playing'}
@@ -132,30 +116,28 @@ function PlayerUI() {
         </div>
 
         {/* Bottom controls */}
-        <div style={{ padding: '24px 48px 16px', display: 'flex',
-          flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div style={{ padding: '20px 48px 24px', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <ProgressBar currentTime={currentTime} duration={duration}
             onSeek={seekTo} disabled={playbackState === 'idle' || playbackState === 'loading'} />
           <PlayControls playbackState={playbackState}
             onToggle={togglePlay} onPrev={prevSong} onNext={nextSong}
             disabled={playbackState === 'loading'} />
-          <VolumeControl volume={volume} isMuted={isMuted}
-            onVolumeChange={changeVolume} onMuteToggle={toggleMuteAudio} />
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className="ctrl-btn" style={{ width: 'auto', padding: '0 20px', borderRadius: 20, fontSize: '0.8rem' }}
-              onClick={handleLike}>♥ 喜欢</button>
-            <button className="ctrl-btn" style={{ width: 'auto', padding: '0 20px', borderRadius: 20, fontSize: '0.8rem' }}
-              onClick={addToPlaylist}>+ 加入歌单</button>
-            <button className="ctrl-btn" style={{ width: 'auto', padding: '0 20px', borderRadius: 20, fontSize: '0.8rem' }}
-              onClick={nextSong}>» 跳过</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <VolumeControl volume={volume} isMuted={isMuted}
+              onVolumeChange={changeVolume} onMuteToggle={toggleMuteAudio} />
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={actionBtnStyle} onClick={handleLike}>♥ 喜欢</button>
+              <button style={actionBtnStyle} onClick={addToPlaylist}>+ 歌单</button>
+              <button style={actionBtnStyle} onClick={nextSong}>» 跳过</button>
+            </div>
           </div>
 
-          {/* Song info */}
           {currentSong && (
-            <div style={{ textAlign: 'center', paddingBottom: 16 }}>
-              <span style={{ color: '#706090', fontSize: '0.75rem' }}>
+            <div style={{ textAlign: 'center', paddingBottom: 4 }}>
+              <span style={{ color: '#706090', fontSize: '0.7rem' }}>
                 {currentSong.artist}{currentSong.album ? ` · ${currentSong.album}` : ''}
               </span>
             </div>
@@ -167,6 +149,23 @@ function PlayerUI() {
         onClose={() => setShowQueue(false)} onPlay={(i) => { play(i); setShowQueue(false) }} />
     </div>
   )
+}
+
+const iconBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 36, height: 36, borderRadius: '50%',
+  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'rgba(255,255,255,0.03)', color: '#B8A8D8',
+  cursor: 'pointer', backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+}
+
+const actionBtnStyle: React.CSSProperties = {
+  padding: '6px 16px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)',
+  background: 'rgba(255,255,255,0.03)', color: '#B8A8D8',
+  fontSize: '0.75rem', fontFamily: 'Inter, sans-serif', cursor: 'pointer',
+  backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+  transition: 'all 0.2s ease',
 }
 
 export default function App() {

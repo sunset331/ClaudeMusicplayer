@@ -104,7 +104,8 @@ export default function FluidBackground({ speed = 'medium', mood = 'normal', dis
         if (rctx) {
           rctx.clearRect(0, 0, w, h)
 
-          // Spawn drops
+          // Spawn drops — seed immediately if nothing is active
+          if (raindrops.length === 0 && ripples.length === 0) { spawnDrop(w, h); dropTimer = 0 }
           dropTimer += 0.016; const interval = 2.5 + Math.random() * 1.5
           if (dropTimer > interval && raindrops.length < 1) { dropTimer = 0; spawnDrop(w, h) }
 

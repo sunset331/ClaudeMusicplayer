@@ -70,10 +70,8 @@ function PlayerUI() {
       display: 'flex', flexDirection: 'column', background: '#020203' }}>
       <FluidBackground speed={fluidSpeed} mood={usePlayerStore((s) => s.shaderMood)} />
 
-      {/* Glass overlay */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
-        background: 'rgba(2,2,3,0.10)', backdropFilter: 'blur(80px)',
-        WebkitBackdropFilter: 'blur(80px)' }} />
+      {/* Frosted glass overlay */}
+      <div className="glass-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none' }} />
 
       {/* UI Layer */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex',

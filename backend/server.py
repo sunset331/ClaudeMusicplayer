@@ -115,7 +115,7 @@ def _song_to_dict(song):
         "artist": str(singer),
         "album": song.get("albumname", song.get("album", "")),
         "albumId": song.get("albumid", song.get("albumId", 0)),
-        "duration": int(song.get("duration", 0) or 0),
+        "duration": int((song.get("duration", 0) or 0) / 1000),  # ms → seconds
         "score": round(float(song.get("_score", 0)), 4),
         "sources": song.get("_sources", []),
         "played": bool(song.get("_played", False)),

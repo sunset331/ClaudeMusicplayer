@@ -68,11 +68,6 @@ export function useBackend() {
 
       // Use audio proxy to bypass NetEase Referer restrictions
       const url = `${API}/stream/${song.id}`
-      if (!url) {
-        console.warn('No playable URL for:', song.name)
-        setPlaybackState('idle')
-        return
-      }
 
       setCurrentSong(song)
       incrementPlayCount()

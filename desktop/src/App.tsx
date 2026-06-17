@@ -11,22 +11,18 @@ import QueuePanel from './components/Queue/QueuePanel'
 import { ListMusic } from 'lucide-react'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  constructor(props: { children: ReactNode }) {
-    super(props)
-    this.state = { error: null }
-  }
+  constructor(props: { children: ReactNode }) { super(props); this.state = { error: null } }
   static getDerivedStateFromError(error: Error) { return { error } }
   render() {
     if (this.state.error) {
       return (
-        <div style={{ width: '100vw', height: '100vh', background: '#020203',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        <div style={{ width: '100vw', height: '100vh', background: '#020203', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           color: '#F5F0FF', fontFamily: 'Inter, sans-serif', padding: 48 }}>
           <h1 style={{ color: '#FF1413', fontSize: '1.5rem', marginBottom: 16 }}>Render Error</h1>
           <pre style={{ color: '#B8A8D8', fontSize: '0.8rem', maxWidth: 600, whiteSpace: 'pre-wrap',
             background: 'rgba(255,255,255,0.05)', padding: 20, borderRadius: 12 }}>
-            {this.state.error.message}{'\n\n'}{this.state.error.stack}
-          </pre>
+            {this.state.error.message}{'\n\n'}{this.state.error.stack}</pre>
         </div>
       )
     }
@@ -41,6 +37,7 @@ function PlayerUI() {
   const playCount = usePlayerStore((s) => s.playCount)
   const songs = usePlayerStore((s) => s.songs)
   const currentIndex = usePlayerStore((s) => s.currentIndex)
+  const setShaderMood = usePlayerStore((s) => s.setShaderMood)
 
   const [showQueue, setShowQueue] = useState(false)
 
@@ -50,6 +47,13 @@ function PlayerUI() {
     togglePlay, nextSong, prevSong, play,
     seekTo, changeVolume, toggleMuteAudio,
   } = usePlayback()
+
+  const handleLike = () => {
+    if (!currentSong) return
+    fetch(`/api/like/${currentSong.id}`, { method: 'POST' }).catch(() => {})
+    setShaderMood('excited')
+    setTimeout(() => setShaderMood('normal'), 3000)
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden',
@@ -64,28 +68,21 @@ function PlayerUI() {
         flexDirection: 'column', height: '100%', width: '100%' }}>
         <TopBar fluidSpeed={fluidSpeed} onSpeedChange={setFluidSpeed} playCount={playCount} />
 
-        {/* Queue toggle button */}
-        <button
-          onClick={() => setShowQueue(!showQueue)}
-          className="ctrl-btn"
+        <button onClick={() => setShowQueue(!showQueue)} className="ctrl-btn"
           style={{ position: 'absolute', left: 16, top: 80, zIndex: 20 }}
-          aria-label="播放列表"
-        >
-          <ListMusic size={16} />
-        </button>
+          aria-label="播放列表"><ListMusic size={16} /></button>
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center',
           justifyContent: 'center', padding: '0 48px' }}>
           <LyricsCanvas
-            lyrics={lyrics}
-            currentIndex={currentLyricIndex}
+            lyrics={lyrics} currentIndex={currentLyricIndex}
             isPlaying={playbackState === 'playing'}
-            currentSong={currentSong ? { name: currentSong.name, artist: currentSong.artist } : undefined}
-          />
+            currentSong={currentSong ? { name: currentSong.name, artist: currentSong.artist } : undefined} />
         </div>
 
-        <div style={{ padding: '24px 48px 32px', display: 'flex',
-          flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        {/* Bottom controls */}
+        <div style={{ padding: '24px 48px 16px', display: 'flex',
+          flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <ProgressBar currentTime={currentTime} duration={duration}
             onSeek={seekTo} disabled={playbackState === 'idle' || playbackState === 'loading'} />
           <PlayControls playbackState={playbackState}
@@ -93,17 +90,28 @@ function PlayerUI() {
             disabled={playbackState === 'loading'} />
           <VolumeControl volume={volume} isMuted={isMuted}
             onVolumeChange={changeVolume} onMuteToggle={toggleMuteAudio} />
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button className="ctrl-btn" style={{ width: 'auto', padding: '0 20px', borderRadius: 20, fontSize: '0.8rem' }}
+              onClick={handleLike}>♥ 喜欢</button>
+            <button className="ctrl-btn" style={{ width: 'auto', padding: '0 20px', borderRadius: 20, fontSize: '0.8rem' }}
+              onClick={nextSong}>» 跳过</button>
+          </div>
+
+          {/* Song info */}
+          {currentSong && (
+            <div style={{ textAlign: 'center', paddingBottom: 16 }}>
+              <span style={{ color: '#706090', fontSize: '0.75rem' }}>
+                {currentSong.artist}{currentSong.album ? ` · ${currentSong.album}` : ''}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Slide-out queue panel */}
-      <QueuePanel
-        songs={songs}
-        currentIndex={currentIndex}
-        isOpen={showQueue}
-        onClose={() => setShowQueue(false)}
-        onPlay={(i) => { play(i); setShowQueue(false) }}
-      />
+      <QueuePanel songs={songs} currentIndex={currentIndex} isOpen={showQueue}
+        onClose={() => setShowQueue(false)} onPlay={(i) => { play(i); setShowQueue(false) }} />
     </div>
   )
 }

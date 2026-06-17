@@ -28,23 +28,25 @@ export function usePlayback() {
   const { fetchQueue, fetchAndPlay, fetchLyrics, syncLyricIndex, connectWS } = useBackend()
 
   const initRef = useRef(false)
+  const autoPlayRef = useRef(false)
 
-  // ── Initialize: fetch queue, connect WS ──
+  // ── Initialize: fetch queue, select first song (don't play — wait for user) ──
   useEffect(() => {
     if (initRef.current) return
     initRef.current = true
 
     fetchQueue().then((data) => {
       if (data && data.songs.length > 0) {
-        play(0)
+        // Select first song for display, but don't auto-play
+        usePlayerStore.getState().play(0)
       }
     })
     connectWS()
-  }, [fetchQueue, connectWS, play])
+  }, [fetchQueue, connectWS])
 
-  // ── Auto-play when song changes ──
+  // ── Play when song changes (only if user-initiated or auto-next) ──
   useEffect(() => {
-    if (currentSong && currentIndex >= 0) {
+    if (currentSong && currentIndex >= 0 && autoPlayRef.current) {
       fetchAndPlay(currentSong)
       fetchLyrics(currentSong.id)
     }
@@ -78,16 +80,24 @@ export function usePlayback() {
     } else if (playbackState === 'paused') {
       audioEngine.togglePlay()
       setPlaybackState('playing')
-    } else if (songs.length > 0 && currentIndex < 0) {
-      play(0)
+    } else {
+      // First play — enable auto-play for future song changes
+      autoPlayRef.current = true
+      const s = usePlayerStore.getState().currentSong
+      if (s) {
+        fetchAndPlay(s)
+        fetchLyrics(s.id)
+      }
     }
-  }, [playbackState, songs, currentIndex, play, setPlaybackState])
+  }, [playbackState, setPlaybackState, fetchAndPlay, fetchLyrics])
 
   const nextSong = useCallback(() => {
+    autoPlayRef.current = true
     next()
   }, [next])
 
   const prevSong = useCallback(() => {
+    autoPlayRef.current = true
     prev()
   }, [prev])
 

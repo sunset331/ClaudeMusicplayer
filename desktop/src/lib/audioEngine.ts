@@ -45,14 +45,13 @@ class AudioEngine {
     } as AudioEvent)
   }
 
-  async play(url: string): Promise<void> {
+  play(url: string): void {
     this.stop()
     this.emit('loading')
 
     const audio = new Audio()
     audio.crossOrigin = 'anonymous'
     audio.volume = this._muted ? 0 : this._volume
-    audio.src = url
 
     audio.addEventListener('loadedmetadata', () => this.emit('play'))
     audio.addEventListener('timeupdate', () => this.emit('timeupdate'))
@@ -61,12 +60,12 @@ class AudioEngine {
       this.emit('error', { error: `Failed to load audio: ${audio.error?.message ?? 'unknown'}` })
     )
 
-    try {
-      await audio.play()
-      this.audio = audio
-    } catch (err) {
+    audio.src = url
+    this.audio = audio
+    // Don't await — must preserve user-gesture context for autoplay policy
+    audio.play().catch((err) => {
       this.emit('error', { error: `Playback failed: ${err}` })
-    }
+    })
   }
 
   togglePlay(): void {

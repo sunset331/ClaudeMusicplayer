@@ -98,7 +98,7 @@ export function useBackend() {
         }
       })
 
-      await audioEngine.play(url)
+      audioEngine.play(url)
     },
     [setPlaybackState, setCurrentSong, incrementPlayCount, setCurrentTime, setDuration, next]
   )

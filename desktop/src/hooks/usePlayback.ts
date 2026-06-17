@@ -62,14 +62,14 @@ export function usePlayback() {
   }, [playbackState, syncLyricIndex])
 
   // ── Dwell detection: trigger smart-insert when >80% listened ──
+  const DWELL_THRESHOLD = 0.8
   const dwellFiredRef = useRef<number | null>(null)
+  // Reset dwell flag when song changes
+  useEffect(() => { dwellFiredRef.current = null }, [currentSong?.id])
   useEffect(() => {
-    if (playbackState !== 'playing' || !currentSong || duration <= 0) {
-      dwellFiredRef.current = null
-      return
-    }
+    if (playbackState !== 'playing' || !currentSong || duration <= 0) return
     const pct = currentTime / duration
-    if (pct > 0.8 && dwellFiredRef.current !== currentSong.id) {
+    if (pct > DWELL_THRESHOLD && dwellFiredRef.current !== currentSong.id) {
       dwellFiredRef.current = currentSong.id
       fetch('/api/smart-insert', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },

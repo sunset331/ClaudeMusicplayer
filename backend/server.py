@@ -224,13 +224,17 @@ def _ingest_playlist_seed(mode: str):
     genre_count: dict[str, int] = {}
     for t in all_tracks:
         if isinstance(t, dict):
-            for ar in t.get("ar", []):
-                name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
-                if name:
-                    artist_count[name] = artist_count.get(name, 0) + 1
-            for tag in (t.get("dt", []) or []):
-                if isinstance(tag, str):
-                    genre_count[tag] = genre_count.get(tag, 0) + 1
+            ar_list = t.get("ar", [])
+            if isinstance(ar_list, list):
+                for ar in ar_list:
+                    name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
+                    if name:
+                        artist_count[name] = artist_count.get(name, 0) + 1
+            dt_list = t.get("dt", [])
+            if isinstance(dt_list, list):
+                for tag in dt_list:
+                    if isinstance(tag, str):
+                        genre_count[tag] = genre_count.get(tag, 0) + 1
 
     # Update weights (normalize to 0.1-1.0 range)
     if artist_count:
@@ -263,7 +267,6 @@ def _daily_refresh(force: bool = False):
                 today = time.strftime("%Y-%m-%d")
                 if not built_at.startswith(today):
                     needs_rebuild = True
-                    log.info("Candidates stale for %s (built %s), rebuilding...", mode, built_at)
             except Exception:
                 needs_rebuild = True
         elif not os.path.exists(cache_path):
@@ -334,8 +337,8 @@ def _song_to_dict(song):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _load_state()
-    # Daily auto-refresh: ingest playlist seeds + rebuild if stale
-    _daily_refresh(force=False)
+    # Daily auto-refresh in background (can take 15-60s, don't block startup)
+    threading.Thread(target=_daily_refresh, kwargs={"force": False}, daemon=True).start()
     try:
         with _read_state() as st:
             mode = st["mode"]
@@ -549,15 +552,15 @@ def _load_chat_context():
         if os.path.exists(hp):
             with open(hp, encoding="utf-8") as f:
                 history = json.load(f)
-    except Exception:
-        pass
+    except (json.JSONDecodeError, OSError) as e:
+        log.warning("Failed to load history.json: %s", e)
     try:
         tp = os.path.join(DATA_DIR, "taste.json")
         if os.path.exists(tp):
             with open(tp, encoding="utf-8") as f:
                 taste = json.load(f)
-    except Exception:
-        pass
+    except (json.JSONDecodeError, OSError) as e:
+        log.warning("Failed to load taste.json: %s", e)
     # Build song_stats for current song
     song_stats = {}
     with _read_state() as st:
@@ -602,6 +605,21 @@ async def chat_message(body: dict):
         return {"reply": "沧溟正在休息，请稍后再试...", "signals": []}
 
 
+def _ncm_song_to_internal(s: dict, source: str, score: float) -> dict:
+    """Convert NetEase API song result to internal song dict. Shared helper."""
+    return {
+        "songid": s.get("id"),
+        "songname": s.get("name", ""),
+        "singer": s.get("ar", s.get("artists", [])),
+        "albumname": s.get("al", {}).get("name", "") if isinstance(s.get("al"), dict) else "",
+        "albumid": s.get("al", {}).get("id", 0) if isinstance(s.get("al"), dict) else 0,
+        "duration": s.get("dt", s.get("duration", 0)),
+        "_score": score,
+        "_sources": [source],
+        "_played": False,
+    }
+
+
 def _handle_chat_signals(signals: list, text: str) -> list:
     """Process chat signals: handle song requests, insert songs into queue."""
     inserted = []
@@ -619,13 +637,7 @@ def _handle_chat_signals(signals: list, text: str) -> list:
                 results = []
                 if data and "result" in data:
                     for s in data["result"].get("songs", [])[:count + 5]:
-                        results.append({
-                            "songid": s.get("id"), "songname": s.get("name"),
-                            "singer": s.get("ar", []), "albumname": s.get("al", {}).get("name", ""),
-                            "albumid": s.get("al", {}).get("id", 0),
-                            "duration": s.get("dt", 0), "_score": 0.99, "_sources": ["chat_request"],
-                            "_played": False,
-                        })
+                        results.append(_ncm_song_to_internal(s, "chat_request", 0.99))
             if results:
                 with _read_state() as st:
                     songs = list(st["songs"])
@@ -676,12 +688,10 @@ async def smart_insert(body: dict):
                         for s in simi["songs"][:5]:
                             ar_name = s.get("artists", [{}])[0].get("name", "") if s.get("artists") else ""
                             if ar_name != skip_artist:
-                                alt_songs.append({
-                                    "songid": s.get("id"), "songname": s.get("name"),
-                                    "singer": [{"name": ar_name}], "albumname": "",
-                                    "albumid": 0, "duration": s.get("duration", 0) * 1000,
-                                    "_score": 0.85, "_sources": ["smart_skip"], "_played": False,
-                                })
+                                song = _ncm_song_to_internal(s, "smart_skip", 0.85)
+                                song["singer"] = [{"name": ar_name}]
+                                song["duration"] = s.get("duration", 0) * 1000  # simi gives seconds
+                                alt_songs.append(song)
                     # Insert 2 alternative songs
                     for s in alt_songs[:2]:
                         with _read_state() as st:
@@ -697,13 +707,7 @@ async def smart_insert(body: dict):
                 if data and "result" in data:
                     for s in data["result"].get("songs", [])[:3]:
                         if s.get("id") != song.get("songid"):
-                            new_song = {
-                                "songid": s.get("id"), "songname": s.get("name"),
-                                "singer": s.get("ar", []), "albumname": s.get("al", {}).get("name", ""),
-                                "albumid": s.get("al", {}).get("id", 0),
-                                "duration": s.get("dt", 0), "_score": 0.88,
-                                "_sources": ["smart_dwell"], "_played": False,
-                            }
+                            new_song = _ncm_song_to_internal(s, "smart_dwell", 0.88)
                             with _read_state() as st:
                                 st["songs"].insert(st["current_idx"] + 1, new_song)
                             inserted.append(_song_to_dict(new_song))
@@ -717,12 +721,9 @@ async def smart_insert(body: dict):
             if simi and "songs" in simi:
                 for s in simi["songs"][:2]:
                     ar_name = s.get("artists", [{}])[0].get("name", "") if s.get("artists") else ""
-                    new_song = {
-                        "songid": s.get("id"), "songname": s.get("name"),
-                        "singer": [{"name": ar_name}], "albumname": "",
-                        "albumid": 0, "duration": s.get("duration", 0) * 1000,
-                        "_score": 0.92, "_sources": ["smart_like"], "_played": False,
-                    }
+                    new_song = _ncm_song_to_internal(s, "smart_like", 0.92)
+                    new_song["singer"] = [{"name": ar_name}]
+                    new_song["duration"] = s.get("duration", 0) * 1000
                     with _read_state() as st:
                         st["songs"].insert(st["current_idx"] + 1, new_song)
                     inserted.append(_song_to_dict(new_song))

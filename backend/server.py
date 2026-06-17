@@ -858,12 +858,50 @@ def _run_tray():
     icon = pystray.Icon("claude_music", image, "Claude Music", menu)
     icon.run()
 
+# ── Global hotkeys (pynput) ──
+def _run_hotkeys():
+    try:
+        from pynput.keyboard import GlobalHotKeys, Key
+    except ImportError:
+        log.warning("pynput not installed, global hotkeys disabled")
+        return
+
+    def api_post(path):
+        try:
+            import requests as _r
+            _r.post(f"http://localhost:8765{path}", timeout=1)
+        except Exception:
+            pass
+
+    def on_play_pause():
+        with _read_state() as st: pass  # toggle via API
+        api_post("/api/toggle")
+
+    def on_next(): api_post("/api/next")
+    def on_prev(): api_post("/api/prev")
+
+    try:
+        with GlobalHotKeys({
+            '<ctrl>+<alt>+<space>': on_play_pause,
+            '<ctrl>+<alt>+<right>': on_next,
+            '<ctrl>+<alt>+<left>': on_prev,
+        }) as h:
+            # Also register media keys if available
+            try:
+                h._handler.Listener._listen_kwargs['suppress'] = False
+            except Exception:
+                pass
+            h.join()
+    except Exception as e:
+        log.warning("Global hotkeys failed: %s", e)
+
 # ── Entry ──
 if __name__ == "__main__":
     import uvicorn
     import threading as _thr
 
     _thr.Thread(target=_run_tray, daemon=True).start()
+    _thr.Thread(target=_run_hotkeys, daemon=True).start()
 
     log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

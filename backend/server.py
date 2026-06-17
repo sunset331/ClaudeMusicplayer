@@ -429,6 +429,12 @@ async def like_song(song_id: int):
             song = next((s for s in st["songs"] if str(s.get("songid")) == sid), None)
     _save_state()
     _record_feedback(song_id, song, "like")
+    # Sync to NetEase Cloud Music
+    try:
+        ncm("/like", {"id": song_id, "like": True})
+        log.info("Like song=%d synced to NetEase", song_id)
+    except Exception as e:
+        log.warning("NetEase like sync failed for %d: %s", song_id, e)
     log.info("Like song=%d epsilon=%.2f", song_id, eps)
     return {"ok": True, "epsilon": eps}
 

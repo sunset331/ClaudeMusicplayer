@@ -119,7 +119,7 @@ function PlayerUI() {
           <LyricsCanvas
             lyrics={lyrics} currentIndex={currentLyricIndex}
             isPlaying={playbackState === 'playing'}
-            currentSong={currentSong ? { name: currentSong.name, artist: currentSong.artist } : undefined} />
+            currentSong={currentSong ? { name: currentSong.name, artist: currentSong.artist, albumId: currentSong.albumId } : undefined} />
         </div>
 
         {/* Bottom controls */}

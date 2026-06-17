@@ -6,7 +6,7 @@ interface LyricsCanvasProps {
   lyrics: LyricLine[]
   currentIndex: number
   isPlaying: boolean
-  currentSong?: { name: string; artist: string }
+  currentSong?: { name: string; artist: string; albumId?: number }
 }
 
 export default function LyricsCanvas({
@@ -60,8 +60,21 @@ export default function LyricsCanvas({
       {empty && currentSong && (
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, zIndex: 1 }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 1 }}
         >
+          {/* Album art */}
+          {currentSong.albumId ? (
+            <img
+              src={`/api/covers/ne_${currentSong.albumId}.jpg`}
+              alt=""
+              style={{
+                width: 160, height: 160, borderRadius: 12,
+                objectFit: 'cover', opacity: 0.6,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          ) : null}
           <p style={{
             fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2rem',
             color: '#F5F0FF', textShadow: '0 2px 24px rgba(255,255,255,0.15)',

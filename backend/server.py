@@ -593,11 +593,20 @@ async def chat_message(body: dict):
         # Handle song requests from chat signals
         inserted = _handle_chat_signals(signals, text)
 
+        # Detect mood radio triggers
+        mood = None
+        try:
+            import smart_dj
+            mood = smart_dj.detect_mood(text)
+        except Exception:
+            pass
+
         return {
             "reply": reply_clean,
             "signals": signals,
             "shouldSkip": should_skip,
             "inserted": inserted,
+            "mood": mood,
         }
     except Exception as e:
         log.warning("Chat error: %s", e)
@@ -803,6 +812,21 @@ async def serve_index():
     if os.path.isfile(_INDEX_PATH):
         return FileResponse(_INDEX_PATH)
     return HTMLResponse("<h1>Frontend not built. Run: cd desktop && npx vite build</h1>", status_code=503)
+
+# ── Sleep timer ──
+@app.post("/api/sleep/{minutes}")
+async def sleep_timer(minutes: int):
+    """Set a sleep timer — stop playback after N minutes."""
+    if minutes < 1 or minutes > 120:
+        return {"ok": False, "error": "1-120 minutes only"}
+    def _sleep():
+        time.sleep(minutes * 60)
+        log.info("Sleep timer fired after %d min", minutes)
+        with _read_state() as st:
+            st["playing"] = False
+    threading.Thread(target=_sleep, daemon=True).start()
+    log.info("Sleep timer set: %d minutes", minutes)
+    return {"ok": True, "minutes": minutes}
 
 # ── System tray toggle ──
 @app.post("/api/toggle")

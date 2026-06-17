@@ -71,6 +71,12 @@ export function useBackend() {
 
       setCurrentSong(song)
       incrementPlayCount()
+      // Toast notification
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(song.name, { body: song.artist, silent: true })
+      } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission()
+      }
 
       audioEngine.onEvent((event) => {
         switch (event.type) {

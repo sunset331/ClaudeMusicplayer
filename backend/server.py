@@ -804,9 +804,66 @@ async def serve_index():
         return FileResponse(_INDEX_PATH)
     return HTMLResponse("<h1>Frontend not built. Run: cd desktop && npx vite build</h1>", status_code=503)
 
+# ── System tray toggle ──
+@app.post("/api/toggle")
+async def toggle_playback():
+    return {"ok": True}
+
+# ── System tray (pystray) ──
+def _run_tray():
+    try:
+        from PIL import Image, ImageDraw
+        import pystray
+        import requests as _req
+    except ImportError:
+        log.warning("pystray or PIL not installed, tray disabled")
+        return
+
+    icon_path = os.path.join(DATA_DIR, "icon.ico")
+    if os.path.exists(icon_path):
+        image = Image.open(icon_path)
+    else:
+        image = Image.new("RGB", (64, 64), "#1a1030")
+        d = ImageDraw.Draw(image)
+        d.ellipse([16, 16, 48, 48], fill="#C084FC")
+
+    def on_show(icon, item):
+        import webbrowser; webbrowser.open("http://localhost:8765")
+
+    def on_playpause(icon, item):
+        try: _req.post("http://localhost:8765/api/toggle", timeout=2)
+        except Exception: pass
+
+    def on_next(icon, item):
+        try: _req.post("http://localhost:8765/api/next", timeout=2)
+        except Exception: pass
+
+    def on_prev(icon, item):
+        try: _req.post("http://localhost:8765/api/prev", timeout=2)
+        except Exception: pass
+
+    def on_exit(icon, item):
+        icon.stop()
+        import os as _os; _os._exit(0)
+
+    menu = pystray.Menu(
+        pystray.MenuItem("显示 Claude Music", on_show, default=True),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("播放/暂停", on_playpause),
+        pystray.MenuItem("下一首", on_next),
+        pystray.MenuItem("上一首", on_prev),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("退出", on_exit),
+    )
+    icon = pystray.Icon("claude_music", image, "Claude Music", menu)
+    icon.run()
+
 # ── Entry ──
 if __name__ == "__main__":
     import uvicorn
+    import threading as _thr
+
+    _thr.Thread(target=_run_tray, daemon=True).start()
 
     log.info("Starting Claude Music server on http://localhost:8765")
     uvicorn.run(app, host="127.0.0.1", port=8765, log_level="info")

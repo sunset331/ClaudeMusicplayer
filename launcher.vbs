@@ -3,39 +3,39 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 
 projDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 pythonExe = "F:\miniconda3\python.exe"
+serverScript = projDir & "\backend\server.py"
 
 ' Check if server already running
 serverRunning = False
 On Error Resume Next
 Dim http: Set http = CreateObject("MSXML2.ServerXMLHTTP")
 http.Open "GET", "http://localhost:8765/api/status", False
+http.SetTimeouts 3000, 3000, 3000, 3000
 http.Send
 If Err.Number = 0 And http.Status = 200 Then serverRunning = True
 On Error Goto 0
 
 If Not serverRunning Then
-    ' Kill stale processes on port 8765
-    WshShell.Run "cmd /c for /f ""tokens=5"" %a in ('netstat -ano ^| findstr :8765') do taskkill /pid %a /f >nul 2>&1", 0, True
-    ' Start Python server (hidden)
-    WshShell.Run """" & pythonExe & """ """ & projDir & "\backend\server.py""", 0, False
-    ' Wait for ready
-    For i = 1 To 15
+    ' Start Python server
+    WshShell.Run """" & pythonExe & """ """ & serverScript & """", 1, False
+    
+    ' Wait up to 30 seconds
+    For i = 1 To 30
         WScript.Sleep 1000
         Err.Clear
         On Error Resume Next
         Dim http2: Set http2 = CreateObject("MSXML2.ServerXMLHTTP")
         http2.Open "GET", "http://localhost:8765/api/status", False
+        http2.SetTimeouts 2000, 2000, 2000, 2000
         http2.Send
         If Err.Number = 0 And http2.Status = 200 Then Exit For
         On Error Goto 0
     Next
 End If
 
-' Open browser (always — focus existing if possible, or open new)
 WScript.Sleep 300
 chrome = WshShell.ExpandEnvironmentStrings("%ProgramFiles%") & "\Google\Chrome\Application\chrome.exe"
 edge = WshShell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
-
 If objFSO.FileExists(chrome) Then
     WshShell.Run """" & chrome & """ --app=http://localhost:8765 --window-size=1200,800"
 ElseIf objFSO.FileExists(edge) Then

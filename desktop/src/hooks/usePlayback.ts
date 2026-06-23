@@ -29,66 +29,13 @@ export function usePlayback() {
 
   const initRef = useRef(false)
   const autoPlayRef = useRef(false)
+  const fetchAndPlayRef = useRef(fetchAndPlay)
+  const fetchLyricsRef = useRef(fetchLyrics)
+  fetchAndPlayRef.current = fetchAndPlay
+  fetchLyricsRef.current = fetchLyrics
 
-  // ── Initialize: fetch queue, select first song (don't play — wait for user) ──
-  useEffect(() => {
-    if (initRef.current) return
-    initRef.current = true
+  // ── Actions (must be before keyboardHandlers — they're referenced by useMemo) ──
 
-    fetchQueue().then((data) => {
-      if (data && data.songs.length > 0) {
-        // Select first song for display, but don't auto-play
-        usePlayerStore.getState().play(0)
-      }
-    })
-    connectWS()
-  }, [fetchQueue, connectWS])
-
-  // ── Play when song changes (only if user-initiated or auto-next) ──
-  useEffect(() => {
-    if (currentSong && currentIndex >= 0 && autoPlayRef.current) {
-      fetchAndPlay(currentSong)
-      fetchLyrics(currentSong.id)
-    }
-  }, [currentIndex, currentSong?.id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Sync lyrics every 300ms ──
-  useEffect(() => {
-    if (playbackState !== 'playing') return
-    const interval = setInterval(() => {
-      syncLyricIndex(usePlayerStore.getState().currentTime * 1000)
-    }, 300)
-    return () => clearInterval(interval)
-  }, [playbackState, syncLyricIndex])
-
-  // ── Dwell detection: trigger smart-insert when >80% listened ──
-  const DWELL_THRESHOLD = 0.8
-  const dwellFiredRef = useRef<number | null>(null)
-  // Reset dwell flag when song changes
-  useEffect(() => { dwellFiredRef.current = null }, [currentSong?.id])
-  useEffect(() => {
-    if (playbackState !== 'playing' || !currentSong || duration <= 0) return
-    const pct = currentTime / duration
-    if (pct > DWELL_THRESHOLD && dwellFiredRef.current !== currentSong.id) {
-      dwellFiredRef.current = currentSong.id
-      smartInsert('dwell')
-    }
-  }, [currentTime, duration, playbackState, currentSong?.id])
-
-  // ── Keyboard shortcuts ──
-  const keyboardHandlers = useMemo(() => ({
-    Space: () => togglePlay(),
-    ArrowLeft: () => prevSong(),
-    ArrowRight: () => nextSong(),
-    ArrowUp: () => setVolume(Math.min(1.5, volume + 0.05)),
-    ArrowDown: () => setVolume(Math.max(0, volume - 0.05)),
-    KeyL: () => handleLike(),
-    KeyS: () => handleSkip(),
-  }), [togglePlay, prevSong, nextSong, setVolume, volume, handleLike, handleSkip])
-
-  useKeyboard(keyboardHandlers)
-
-  // ── Actions ──
   const togglePlay = useCallback(() => {
     if (playbackState === 'playing') {
       audioEngine.togglePlay()
@@ -97,7 +44,6 @@ export function usePlayback() {
       audioEngine.togglePlay()
       setPlaybackState('playing')
     } else {
-      // First play — enable auto-play for future song changes
       autoPlayRef.current = true
       const s = usePlayerStore.getState().currentSong
       if (s) {
@@ -155,8 +101,63 @@ export function usePlayback() {
     nextSong()
   }, [nextSong, smartInsert])
 
+  // ── Keyboard shortcuts ──
+  const keyboardHandlers = useMemo(() => ({
+    Space: () => togglePlay(),
+    ArrowLeft: () => prevSong(),
+    ArrowRight: () => nextSong(),
+    ArrowUp: () => setVolume(Math.min(1.5, volume + 0.05)),
+    ArrowDown: () => setVolume(Math.max(0, volume - 0.05)),
+    KeyL: () => handleLike(),
+    KeyS: () => handleSkip(),
+  }), [togglePlay, prevSong, nextSong, setVolume, volume, handleLike, handleSkip])
+
+  useKeyboard(keyboardHandlers)
+
+  // ── Initialize: fetch queue, select first song (don't play — wait for user) ──
+  useEffect(() => {
+    if (initRef.current) return
+    initRef.current = true
+
+    fetchQueue().then((data) => {
+      if (data && data.songs.length > 0) {
+        usePlayerStore.getState().play(0)
+      }
+    })
+    connectWS()
+  }, [fetchQueue, connectWS])
+
+  // ── Play when song changes (only if user-initiated or auto-next) ──
+  useEffect(() => {
+    if (currentSong && currentIndex >= 0 && autoPlayRef.current) {
+      fetchAndPlayRef.current(currentSong)
+      fetchLyricsRef.current(currentSong.id)
+    }
+  }, [currentIndex, currentSong?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Sync lyrics every 300ms ──
+  useEffect(() => {
+    if (playbackState !== 'playing') return
+    const interval = setInterval(() => {
+      syncLyricIndex(usePlayerStore.getState().currentTime * 1000)
+    }, 300)
+    return () => clearInterval(interval)
+  }, [playbackState, syncLyricIndex])
+
+  // ── Dwell detection: trigger smart-insert when >80% listened ──
+  const DWELL_THRESHOLD = 0.8
+  const dwellFiredRef = useRef<number | null>(null)
+  useEffect(() => { dwellFiredRef.current = null }, [currentSong?.id])
+  useEffect(() => {
+    if (playbackState !== 'playing' || !currentSong || duration <= 0) return
+    const pct = currentTime / duration
+    if (pct > DWELL_THRESHOLD && dwellFiredRef.current !== currentSong.id) {
+      dwellFiredRef.current = currentSong.id
+      smartInsert('dwell')
+    }
+  }, [currentTime, duration, playbackState, currentSong?.id])
+
   return {
-    // State
     songs,
     currentIndex,
     playbackState,
@@ -168,7 +169,6 @@ export function usePlayback() {
     lyrics,
     currentLyricIndex,
 
-    // Actions
     togglePlay,
     nextSong,
     prevSong,

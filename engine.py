@@ -386,9 +386,16 @@ def load_candidates(mode):
 
 def list_history_snapshots(mode=None):
     """List available date-stamped candidate snapshots. Returns list of (date, path, mode)."""
-    os.makedirs(CANDIDATE_DIR, exist_ok=True)
+    try:
+        os.makedirs(CANDIDATE_DIR, exist_ok=True)
+    except OSError:
+        return []
+    try:
+        files = os.listdir(CANDIDATE_DIR)
+    except OSError:
+        return []
     snaps = []
-    for fn in os.listdir(CANDIDATE_DIR):
+    for fn in files:
         if not fn.endswith(".json") or "_" not in fn:
             continue
         # Pattern: {mode}_{date}.json  e.g. rap_2026-06-07.json
@@ -409,8 +416,11 @@ def load_history_snapshot(path):
     """Load a specific snapshot file."""
     if not os.path.exists(path):
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 
 def save_candidates(candidates, mode):
@@ -425,12 +435,11 @@ def save_candidates(candidates, mode):
     # Main cache file
     with open(_candidate_path(mode), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    # Date-stamped snapshot for history browsing
+    # Date-stamped snapshot for history browsing — always overwrite to keep fresh
     today = datetime.now().strftime("%Y-%m-%d")
     snap_path = os.path.join(CANDIDATE_DIR, f"{mode}_{today}.json")
-    if not os.path.exists(snap_path):
-        with open(snap_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+    with open(snap_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def _load_seed_ids():
@@ -456,6 +465,8 @@ def _load_seed_ids():
                 if name:
                     seed_names.add(_norm(name))
         except Exception:
+            import traceback
+            print(f"  [WARN] Failed to parse seed file {seed_file}: {traceback.format_exc()}")
             pass
     return seed_ids, seed_names
 
@@ -566,6 +577,8 @@ def _load_artist_cache():
             with open(ARTIST_ID_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
+            import traceback
+            print(f"  [WARN] Failed to parse seed file {seed_file}: {traceback.format_exc()}")
             pass
     return {}
 
@@ -686,6 +699,8 @@ def _days_ago(date_str):
             return 0.0
         return max(0.0, (now - dt).total_seconds() / 86400)
     except Exception:
+        import traceback
+        print(f"  [WARN] days_ago failed for {date_str!r}: {traceback.format_exc()}")
         return 999
 
 

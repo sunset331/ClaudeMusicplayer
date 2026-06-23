@@ -75,8 +75,8 @@ class GlobalHotkeyListener:
         self._app.root.after(0, self._app._toggle_mute)
 
     def stop(self):
-        if self._listener:
+        for l in self._listeners:
             try:
-                self._listener.stop()
+                l.stop()
             except Exception:
                 pass

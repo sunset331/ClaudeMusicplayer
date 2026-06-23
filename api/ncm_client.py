@@ -70,7 +70,8 @@ def ncm_get(path: str, params: dict | None = None):
     """
     url = _ncm_url(path, params)
     for attempt in range(3):
-        time.sleep(random.uniform(0.1, 0.4))
+        if attempt > 0:
+            time.sleep(random.uniform(0.1, 0.4))
         try:
             r = _session.get(url, timeout=20)
             r.raise_for_status()

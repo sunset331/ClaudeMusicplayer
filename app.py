@@ -1803,9 +1803,23 @@ class MusicPlayer:
         threading.Thread(target=_poll, daemon=True).start()
 
     def _find_playlist(self):
-        """Find or create mode-specific playlists: Claude Rap + Claude Picks."""
-        d = ncm("/user/playlist", {"uid": 0})
-        playlists = d.get("playlist", []) if d else []
+        """Find or create mode-specific playlists: Claude Rap + Claude Picks.
+        Returns True if playlists were found/created successfully."""
+        # Retry up to 3 times — Docker may be slow to start
+        d = None
+        for attempt in range(3):
+            d = ncm("/user/playlist", {"uid": 0})
+            if d is not None and d.get("code") == 200:
+                break
+            if attempt < 2:
+                self.root.after(0, lambda a=attempt:
+                    self._status(f"获取歌单列表失败，重试中 ({a+2}/3)..."))
+                time.sleep(2.0)
+        if not d or d.get("code") != 200:
+            self.root.after(0, lambda: self._status("⚠ 无法获取歌单列表 — Docker 在运行吗？"))
+            return False
+
+        playlists = d.get("playlist", [])
         names = {pl.get("name"): pl.get("id") for pl in playlists}
 
         # Rap playlist
@@ -1813,22 +1827,27 @@ class MusicPlayer:
             self.playlist_rap = names["Claude Rap"]
         else:
             d2 = ncm("/playlist/create", {"name": "Claude Rap", "privacy": 0})
-            if d2:
+            if d2 and (d2.get("code") == 200 or d2.get("id")):
                 self.playlist_rap = d2.get("id") or d2.get("playlist", {}).get("id")
+                self.root.after(0, lambda: self._status("已创建歌单「Claude Rap」"))
 
         # Mixed playlist
         if "Claude Picks" in names:
             self.playlist_mixed = names["Claude Picks"]
         else:
             d2 = ncm("/playlist/create", {"name": "Claude Picks", "privacy": 0})
-            if d2:
+            if d2 and (d2.get("code") == 200 or d2.get("id")):
                 self.playlist_mixed = d2.get("id") or d2.get("playlist", {}).get("id")
+                self.root.after(0, lambda: self._status("已创建歌单「Claude Picks」"))
 
-        # Cache playlist track IDs for dedup (separate per mode)
+        # Cache playlist track IDs for dedup
+        self._block_ids_rap = None
+        self._block_ids_mixed = None
         if self.playlist_rap:
             self._block_ids_rap = eng.get_playlist_track_ids(self.playlist_rap)
         if self.playlist_mixed:
             self._block_ids_mixed = eng.get_playlist_track_ids(self.playlist_mixed)
+        return True
 
     def _get_playlist_block_ids(self, mode=None):
         """Return cached playlist track IDs for given mode (isolated per mode).
@@ -2261,8 +2280,12 @@ class MusicPlayer:
         pl_id = self.playlist_rap if self.mode == "rap" else self.playlist_mixed
         pl_name = "Claude Rap" if self.mode == "rap" else "Claude Picks"
         if not pl_id:
-            self._status("请先登录!")
-            return
+            # Try to re-fetch playlists — user may have logged in since last check
+            self._find_playlist()
+            pl_id = self.playlist_rap if self.mode == "rap" else self.playlist_mixed
+            if not pl_id:
+                self._status("请先登录网易云!")
+                return
         d = ncm("/playlist/tracks", {"op": "add", "pid": pl_id, "tracks": sid})
         if d and d.get("code") == 200:
             # Invalidate cache so next _get_playlist_block_ids refreshes from API
@@ -2273,8 +2296,10 @@ class MusicPlayer:
             self._status(f"已加入「{pl_name}」歌单!")
             self.pl_btn.config(text="✓ 已加入!", fg=FG_OK)
             self.root.after(3000, lambda: self.pl_btn.config(text="+ 加入歌单", fg=FG_BLUE))
+        elif d and d.get("code") == 502:
+            self._status("歌曲已存在歌单中")
         else:
-            self._status("添加失败 - 请先登录")
+            self._status(f"添加失败 (API code={d.get('code') if d else '无响应'})")
 
     # ============================================================
     # ALBUM ART

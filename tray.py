@@ -54,8 +54,11 @@ def show_toast(title, body, icon_path=None, duration="short"):
                              msg=body,
                              duration=duration)
         if icon_path and os.path.exists(icon_path):
-            toast.set_audio(src=None, loop=False)
-            toast.add_actions(buttons=[])
+            toast = Notification(app_id="Claude Music",
+                                 title=title,
+                                 msg=body,
+                                 duration=duration,
+                                 icon=icon_path)
         toast.show()
     except Exception:
         # PowerShell fallback (no winotify dependency needed)

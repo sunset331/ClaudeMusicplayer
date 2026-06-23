@@ -16,3 +16,4 @@ __pycache__/
 data/artist_ids.json
 data/candidates/
 crash.log
+.claude/

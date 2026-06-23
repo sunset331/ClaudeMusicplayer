@@ -4,12 +4,17 @@ Unified NetEase Cloud Music API client.
 Replaces duplicate ncm_get/ncm implementations across the project
 with a single canonical version that includes session management,
 login-cookie loading, and retry-with-jitter logic.
+
+Cookie is passed as a query parameter (``cookie=...``) because the
+NeteaseCloudMusicApiEnhanced Docker container reads it from the URL,
+NOT from HTTP Cookie headers.
 """
 
 import json
 import os
 import random
 import time
+import urllib.parse
 
 import requests
 
@@ -22,18 +27,18 @@ import config
 _session = requests.Session()
 _session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
 
+_COOKIE_VALUE: str = ""
+
 
 def load_cookie() -> bool:
-    """Load NetEase login cookie from LOGIN_FILE into the shared session."""
+    """Load NetEase login cookie from LOGIN_FILE for use as a URL query param."""
+    global _COOKIE_VALUE
     if os.path.exists(config.LOGIN_FILE):
         try:
             with open(config.LOGIN_FILE, "r", encoding="utf-8") as f:
                 d = json.load(f)
-            for item in d.get("cookie", "").split(";"):
-                if "=" in item:
-                    k, v = item.strip().split("=", 1)
-                    _session.cookies.set(k.strip(), v.strip())
-            return True
+            _COOKIE_VALUE = d.get("cookie", "")
+            return bool(_COOKIE_VALUE)
         except Exception:
             pass
     return False
@@ -43,6 +48,19 @@ def load_cookie() -> bool:
 # Public API
 # ---------------------------------------------------------------------------
 
+def _ncm_url(path: str, params: dict | None = None) -> str:
+    """Build the full NetEase API URL, attaching cookie and query params."""
+    base = f"{config.NCM_API}{path}"
+    merged: dict[str, str] = {}
+    if _COOKIE_VALUE:
+        merged["cookie"] = _COOKIE_VALUE
+    if params:
+        merged.update({k: str(v) for k, v in params.items()})
+    if not merged:
+        return base
+    return f"{base}?{urllib.parse.urlencode(merged)}"
+
+
 def ncm_get(path: str, params: dict | None = None):
     """Call the local NetEase Cloud Music API with jitter and retries.
 
@@ -50,12 +68,11 @@ def ncm_get(path: str, params: dict | None = None):
     rate-limit-aware backoff.  Returns the parsed JSON body or *None*
     on failure.
     """
+    url = _ncm_url(path, params)
     for attempt in range(3):
         time.sleep(random.uniform(0.1, 0.4))
         try:
-            r = _session.get(
-                f"{config.NCM_API}{path}", params=params, timeout=20
-            )
+            r = _session.get(url, timeout=20)
             r.raise_for_status()
             return r.json()
         except requests.HTTPError as e:

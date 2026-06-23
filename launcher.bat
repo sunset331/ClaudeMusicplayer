@@ -15,6 +15,6 @@ echo.
 echo   Press any key to stop
 echo.
 
-%PYTHON% backend\server.py
+%PYTHON% app.py
 
 pause >nul

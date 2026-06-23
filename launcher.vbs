@@ -3,43 +3,20 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 
 projDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 pythonExe = "F:\miniconda3\python.exe"
-serverScript = projDir & "\backend\server.py"
+appScript = projDir & "\app.py"
 
-' Check if server already running
-serverRunning = False
-On Error Resume Next
-Dim http: Set http = CreateObject("MSXML2.ServerXMLHTTP")
-http.Open "GET", "http://localhost:8765/api/status", False
-http.SetTimeouts 3000, 3000, 3000, 3000
-http.Send
-If Err.Number = 0 And http.Status = 200 Then serverRunning = True
-On Error Goto 0
+' Check if already running by window title
+Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
+Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name='python.exe'")
 
-If Not serverRunning Then
-    ' Start Python server
-    WshShell.Run """" & pythonExe & """ """ & serverScript & """", 1, False
-    
-    ' Wait up to 30 seconds
-    For i = 1 To 30
-        WScript.Sleep 1000
-        Err.Clear
-        On Error Resume Next
-        Dim http2: Set http2 = CreateObject("MSXML2.ServerXMLHTTP")
-        http2.Open "GET", "http://localhost:8765/api/status", False
-        http2.SetTimeouts 2000, 2000, 2000, 2000
-        http2.Send
-        If Err.Number = 0 And http2.Status = 200 Then Exit For
-        On Error Goto 0
-    Next
-End If
+isRunning = False
+For Each proc In colProcesses
+    If InStr(1, proc.CommandLine, "app.py", vbTextCompare) > 0 Then
+        isRunning = True
+        Exit For
+    End If
+Next
 
-WScript.Sleep 300
-chrome = WshShell.ExpandEnvironmentStrings("%ProgramFiles%") & "\Google\Chrome\Application\chrome.exe"
-edge = WshShell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
-If objFSO.FileExists(chrome) Then
-    WshShell.Run """" & chrome & """ --app=http://localhost:8765 --window-size=1200,800"
-ElseIf objFSO.FileExists(edge) Then
-    WshShell.Run """" & edge & """ --app=http://localhost:8765 --window-size=1200,800"
-Else
-    WshShell.Run "http://localhost:8765"
+If Not isRunning Then
+    WshShell.Run """" & pythonExe & """ """ & appScript & """", 1, False
 End If

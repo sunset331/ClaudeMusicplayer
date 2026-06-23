@@ -4,6 +4,11 @@ cd /d "%~dp0"
 
 set PYTHON=F:\miniconda3\python.exe
 
+REM Load .env file if it exists
+if exist .env (
+    for /f "usebackq tokens=* delims=" %%a in (.env) do set %%a
+)
+
 echo.
 echo   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 echo   ░     Claude Music · Liquid Glass      ░

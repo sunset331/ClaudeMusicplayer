@@ -16,6 +16,26 @@ If Err.Number = 0 And http.Status = 200 Then serverRunning = True
 On Error Goto 0
 
 If Not serverRunning Then
+    ' Read .env and inject into shell environment
+    Dim envFile, envLines, line, eqPos
+    envFile = projDir & "\.env"
+    If objFSO.FileExists(envFile) Then
+        Dim envContent
+        Set envContent = objFSO.OpenTextFile(envFile, 1)
+        envLines = envContent.ReadAll
+        envContent.Close
+        Dim envShell: Set envShell = CreateObject("WScript.Shell").Environment("Process")
+        For Each line In Split(envLines, vbCrLf)
+            line = Trim(line)
+            If Len(line) > 0 And Left(line, 1) <> "#" Then
+                eqPos = InStr(line, "=")
+                If eqPos > 0 Then
+                    envShell(Mid(line, 1, eqPos - 1)) = Mid(line, eqPos + 1)
+                End If
+            End If
+        Next
+    End If
+
     ' Start Python backend server
     WshShell.Run """" & pythonExe & """ """ & serverScript & """", 0, False
 

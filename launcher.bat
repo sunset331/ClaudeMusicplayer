@@ -15,6 +15,6 @@ echo.
 echo   Press any key to stop
 echo.
 
-%PYTHON% app.py
+start "" /B /MIN cmd /c "%PYTHON% backend\server.py"
 
 pause >nul

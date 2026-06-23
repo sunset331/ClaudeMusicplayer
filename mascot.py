@@ -438,9 +438,12 @@ class ClaudeMascot:
         for fname in ["today.json", "today_focus.json"]:
             fpath = os.path.join(DATA_DIR, fname)
             if os.path.exists(fpath):
-                with open(fpath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self.songs.extend(data.get("songs", []))
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self.songs.extend(data.get("songs", []))
+                except Exception:
+                    pass
 
     # ============================================================
     # DJ VOICE (TTS)

@@ -71,7 +71,8 @@ def _record_feedback(song_id: int, song: dict | None, action: str):
             with open(path, encoding="utf-8") as f:
                 h = json.load(f)
         except Exception:
-            pass
+            import traceback
+            log.warning("Failed to read history.json for feedback: %s", traceback.format_exc())
     sid = str(song_id)
     if "song_plays" not in h:
         h["song_plays"] = {}
@@ -287,11 +288,14 @@ def _ingest_playlist_seed(mode: str):
                     name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
                     if name:
                         artist_count[name] = artist_count.get(name, 0) + 1
-            dt_list = t.get("dt", [])
-            if isinstance(dt_list, list):
-                for tag in dt_list:
-                    if isinstance(tag, str):
-                        genre_count[tag] = genre_count.get(tag, 0) + 1
+            dt_list = []
+            dt_val = t.get("dt", 0)
+            # dt is song duration in ms — iterate sequentially to extract artist names only
+            if isinstance(ar_list, list):
+                for ar in ar_list:
+                    name = ar.get("name", "") if isinstance(ar, dict) else str(ar)
+                    if name:
+                        artist_count[name] = artist_count.get(name, 0) + 1
 
     # Update weights (normalize to 0.1-1.0 range)
     if artist_count:

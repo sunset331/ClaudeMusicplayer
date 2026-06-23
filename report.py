@@ -210,6 +210,8 @@ def generate_weekly_discovery(app=None):
 
             return picks
     except Exception:
+        import traceback
+        print(f"  [WARN] weekly discovery failed: {traceback.format_exc()}")
         pass
     return []
 

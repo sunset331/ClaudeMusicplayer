@@ -112,6 +112,7 @@ async def skip_song(song_id: int):
     with state.read() as st:
         st["play_count"] += 1
         st["epsilon"] = min(0.50, st["epsilon"] + 0.01)
+    _save_state(state)
     return await next_song()
 
 

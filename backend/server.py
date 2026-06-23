@@ -30,7 +30,7 @@ from backend.routes.lyrics import router as lyrics_router
 from backend.routes.chat import router as chat_router
 from backend.routes.playlist import router as playlist_router
 
-logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="[%(asctime)s] %(levelname)s %(message)s")
 log = logging.getLogger("claude-music")
 
 # ── Paths ──

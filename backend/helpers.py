@@ -38,7 +38,20 @@ def _load_candidates_into_state(st, mode):
         if isinstance(songs, list) and songs:
             st["candidates"] = songs
             st["songs"] = [s for s in songs if not s.get("_played")]
-            st["current_idx"] = 0 if st["current_idx"] >= len(st["songs"]) else st["current_idx"]
+            st["current_idx"] = 0
+            # Restore position from saved session
+            try:
+                if os.path.exists(SESSION_FILE):
+                    with open(SESSION_FILE, "r", encoding="utf-8") as f:
+                        sess = json.load(f)
+                    last_id = sess.get("last_songid")
+                    if last_id is not None:
+                        for i, s in enumerate(st["songs"]):
+                            if s.get("songid") == last_id or s.get("id") == last_id:
+                                st["current_idx"] = i
+                                break
+            except Exception:
+                pass
             return True
     return False
 

@@ -62,6 +62,8 @@ export function useBackend() {
   }, [setSongs, setMode])
 
   // ── Fetch song URL and play ──
+  const cleanupRef = useRef<(() => void) | null>(null)
+
   const fetchAndPlay = useCallback(
     async (song: Song) => {
       setPlaybackState('loading')
@@ -78,7 +80,9 @@ export function useBackend() {
         Notification.requestPermission()
       }
 
-      audioEngine.onEvent((event) => {
+      // Remove old callback before registering new one
+      cleanupRef.current?.()
+      cleanupRef.current = audioEngine.onEvent((event) => {
         switch (event.type) {
           case 'play':
             setPlaybackState('playing')
@@ -195,10 +199,28 @@ export function useBackend() {
     }
   }, [setCurrentTime])
 
+  // ── Smart insert — deduped helper for dwell/like/skip triggers ──
+  const smartInsert = useCallback(async (trigger: 'skip' | 'dwell' | 'like') => {
+    try {
+      const res = await fetch('/api/smart-insert', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger }),
+      })
+      const data = await res.json()
+      if (data.inserted?.length) {
+        const store = usePlayerStore.getState()
+        const curSongs = [...store.songs]
+        curSongs.splice(store.currentIndex + 1, 0, ...data.inserted)
+        store.setSongs(curSongs)
+      }
+    } catch {}
+  }, [])
+
   // ── Cleanup ──
   useEffect(() => {
     return () => {
       wsRef.current?.close()
+      cleanupRef.current?.()
       audioEngine.stop()
     }
   }, [])
@@ -209,5 +231,6 @@ export function useBackend() {
     fetchLyrics,
     syncLyricIndex,
     connectWS,
+    smartInsert,
   }
 }

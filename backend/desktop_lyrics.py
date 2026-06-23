@@ -92,7 +92,7 @@ class DesktopLyrics:
             return
         try:
             st = self._get_state()
-            lyrics = st.get("lyrics_cache", {}).get("_current", [])
+            lyrics = st.get("_current_lyrics", [])
             if lyrics:
                 cur_time = st.get("current_time", 0) * 1000  # seconds → ms
                 cur_idx = -1

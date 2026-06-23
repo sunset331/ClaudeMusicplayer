@@ -84,13 +84,14 @@ class Song:
     # -- factory methods ---------------------------------------------------
 
     @classmethod
-    def from_ncm_song(cls, raw: dict, source: str = "") -> "Song":
+    def from_ncm_song(cls, raw: dict, source: str = "", *, duration_seconds: bool = False) -> "Song":
         """Build from a NetEase API song item (/search, /artist/songs, /toplist).
 
         Handles multiple API response formats:
         - /search or /artist/songs: {id, name, ar: [{name}], al: {name, id}, dt}
         - /toplist: {id, name, ar/singer, al/album, dt/duration}
         - /simi/song: {id, name, artists: [{name}], album: {name, id}, duration}
+          Set duration_seconds=True when the source is simi/song (duration in seconds).
         """
         singer = (
             raw.get("ar", [])
@@ -99,13 +100,16 @@ class Song:
             or [{"name": a.get("name", "")} for a in raw.get("ar", [])]
         )
         album = raw.get("al", {}) or raw.get("album", {}) or {}
+        duration = raw.get("dt", 0) or raw.get("duration", 0)
+        if duration_seconds:
+            duration = int(duration * 1000)
         return cls(
             songid=raw.get("id", 0),
             songname=raw.get("name", "") or raw.get("songname", ""),
             singer=singer,
             albumname=album.get("name", "") or raw.get("albumname", ""),
             albumid=album.get("id", 0) or raw.get("albumid", 0),
-            duration=raw.get("dt", 0) or raw.get("duration", 0),
+            duration=duration,
             _sources=[source] if source else [],
         )
 

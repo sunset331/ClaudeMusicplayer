@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useMemo } from 'react'
 import { usePlayerStore } from '../store/playerStore'
 import { useBackend } from './useBackend'
 import { audioEngine } from '../lib/audioEngine'
@@ -25,7 +25,7 @@ export function usePlayback() {
     prev,
   } = usePlayerStore()
 
-  const { fetchQueue, fetchAndPlay, fetchLyrics, syncLyricIndex, connectWS } = useBackend()
+  const { fetchQueue, fetchAndPlay, fetchLyrics, syncLyricIndex, connectWS, smartInsert } = useBackend()
 
   const initRef = useRef(false)
   const autoPlayRef = useRef(false)
@@ -71,22 +71,12 @@ export function usePlayback() {
     const pct = currentTime / duration
     if (pct > DWELL_THRESHOLD && dwellFiredRef.current !== currentSong.id) {
       dwellFiredRef.current = currentSong.id
-      fetch('/api/smart-insert', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trigger: 'dwell' }),
-      }).then(r => r.json()).then(data => {
-        if (data.inserted?.length) {
-          const curSongs = [...usePlayerStore.getState().songs]
-          const idx = usePlayerStore.getState().currentIndex
-          curSongs.splice(idx + 1, 0, ...data.inserted)
-          usePlayerStore.getState().setSongs(curSongs)
-        }
-      }).catch(() => {})
+      smartInsert('dwell')
     }
   }, [currentTime, duration, playbackState, currentSong?.id])
 
   // ── Keyboard shortcuts ──
-  useKeyboard({
+  const keyboardHandlers = useMemo(() => ({
     Space: () => togglePlay(),
     ArrowLeft: () => prevSong(),
     ArrowRight: () => nextSong(),
@@ -94,7 +84,9 @@ export function usePlayback() {
     ArrowDown: () => setVolume(Math.max(0, volume - 0.05)),
     KeyL: () => handleLike(),
     KeyS: () => handleSkip(),
-  })
+  }), [togglePlay, prevSong, nextSong, setVolume, volume, handleLike, handleSkip])
+
+  useKeyboard(keyboardHandlers)
 
   // ── Actions ──
   const togglePlay = useCallback(() => {
@@ -152,42 +144,16 @@ export function usePlayback() {
     fetch(`/api/like/${s.currentSong.id}`, { method: 'POST' }).catch(() => {})
     s.setShaderMood('excited')
     setTimeout(() => s.setShaderMood('normal'), 3000)
-    // Smart insert: 2 similar songs after like
-    try {
-      const res = await fetch('/api/smart-insert', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trigger: 'like' }),
-      })
-      const data = await res.json()
-      if (data.inserted?.length) {
-        const curSongs = [...usePlayerStore.getState().songs]
-        const idx = usePlayerStore.getState().currentIndex
-        curSongs.splice(idx + 1, 0, ...data.inserted)
-        usePlayerStore.getState().setSongs(curSongs)
-      }
-    } catch {}
-  }, [])
+    smartInsert('like')
+  }, [smartInsert])
 
   const handleSkip = useCallback(async () => {
     const s = usePlayerStore.getState()
     if (s.currentSong) {
-      // Smart insert: 2 different songs after skip
-      try {
-        const res = await fetch('/api/smart-insert', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trigger: 'skip' }),
-        })
-        const data = await res.json()
-        if (data.inserted?.length) {
-          const curSongs = [...usePlayerStore.getState().songs]
-          const idx = usePlayerStore.getState().currentIndex
-          curSongs.splice(idx + 1, 0, ...data.inserted)
-          usePlayerStore.getState().setSongs(curSongs)
-        }
-      } catch {}
+      smartInsert('skip')
     }
     nextSong()
-  }, [nextSong])
+  }, [nextSong, smartInsert])
 
   return {
     // State

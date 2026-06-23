@@ -2,7 +2,7 @@
 title Claude Music · Liquid Glass
 cd /d "%~dp0"
 
-set PYTHON=C:\ProgramData\miniconda3\python.exe
+set PYTHON=F:\miniconda3\python.exe
 
 echo.
 echo   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

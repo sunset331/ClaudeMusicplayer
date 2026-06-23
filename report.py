@@ -13,6 +13,7 @@ listening report with stats about:
 """
 import json
 import os
+import re
 from datetime import datetime
 from collections import Counter
 

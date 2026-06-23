@@ -2,7 +2,7 @@ Set WshShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
 projDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
-pythonExe = "C:\ProgramData\miniconda3\python.exe"
+pythonExe = "F:\miniconda3\python.exe"
 
 ' Check if server already running
 serverRunning = False

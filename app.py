@@ -160,6 +160,7 @@ class MusicPlayer:
         self._prev_volume = 1.0
         self._epsilon = 0.15  # bandit exploration rate
         self._chat_history = []
+        self._song_request_in_flight = False  # guard: prevent [切歌] race during song search
         self._chat_history_lock = threading.Lock()
         self._reload_pending = False  # anti-reentry guard for _reload_list
 
@@ -805,8 +806,8 @@ class MusicPlayer:
         clean = reply
         m = re.search(r'\s*\[切歌\]\s*$', clean)
         if m:
-            # Don't auto-skip if we're already handling a song request
-            if getattr(self, '_skip_in_progress', False):
+            # Don't auto-skip during song request — it would race with _handle_song_request
+            if getattr(self, '_skip_in_progress', False) or getattr(self, '_song_request_in_flight', False):
                 clean = clean[:m.start()].rstrip()
             else:
                 should_skip = True
@@ -825,6 +826,7 @@ class MusicPlayer:
         song_req = chat.extract_song_request(text)
         if song_req:
             query, count, artist_name = song_req if len(song_req) == 3 else (song_req[0], song_req[1], None)
+            self._song_request_in_flight = True
             threading.Thread(target=lambda: self._handle_song_request(query, count, artist_name),
                            daemon=True).start()
 
@@ -1276,6 +1278,7 @@ class MusicPlayer:
                 song["url"] = {"url": u, "type": "mp3"}
                 self.root.after(0, lambda: self._start_ffplay(u, song))
             elif self.idx == idx:
+                self._skip_in_progress = False  # clear guard: song can't play, let engine move on
                 self.root.after(0, lambda: self._status(
                     f"无播放链接(VIP?): {song['songname'][:30]}"))
         threading.Thread(target=_f, daemon=True).start()
@@ -2062,112 +2065,115 @@ class MusicPlayer:
         TOP/HOT songs sorted by popularity instead of keyword search results.
         Falls back to keyword search if artist lookup fails.
         """
-        self.root.after(0, lambda: self._status(f"正在搜索「{query}」..."))
+        try:
+            self.root.after(0, lambda: self._status(f"正在搜索「{query}」..."))
 
-        # ── Artist mode: fetch top songs by popularity ──
-        artist_songs = None
-        search_artist = artist_name or query
+            # ── Artist mode: fetch top songs by popularity ──
+            artist_songs = None
+            search_artist = artist_name or query
 
-        if search_artist and search_artist.strip():
-            try:
-                artist_songs = eng.search_artist_hot_songs(search_artist, limit=30)
-            except Exception:
-                artist_songs = None
-
-        if artist_songs:
-            # Use artist's hot songs (already sorted by popularity)
-            results = []
-            for s in artist_songs:
-                results.append({
-                    "songname": s.get("songname", ""),
-                    "songid": s.get("songid", 0),
-                    "duration": s.get("duration", 0),
-                    "singer": [{"name": a.get("name", "")} for a in s.get("singer", [])],
-                    "albumname": s.get("albumname", ""),
-                    "albumid": s.get("albumid", 0),
-                })
-            self.root.after(0, lambda: self._status(
-                f"🎤 找到「{search_artist}」{len(results)} 首热门歌曲（按热度排序）"))
-        else:
-            # ── Fallback: keyword search ──
-            try:
-                limit = max(10, count * 3)  # fetch extra for filtering
-                data = ncm("/search", {"keywords": query, "limit": limit})
-                if not data or data.get("code") != 200:
-                    self.root.after(0, lambda: self._status(f"搜索失败，网易云 API 不可达"))
-                    return
-                raw = data.get("result", {}).get("songs", [])
-                if not raw:
-                    self.root.after(0, lambda: self._status(f"没搜到「{query}」"))
-                    return
-
-                results = []
-                for s in raw:
-                    results.append({
-                        "songname": s.get("name", ""),
-                        "songid": s.get("id", 0),
-                        "duration": s.get("duration", 0),
-                        "singer": [{"name": a.get("name", "")} for a in s.get("artists", [])],
-                        "albumname": s.get("album", {}).get("name", ""),
-                        "albumid": s.get("album", {}).get("id", 0),
-                    })
-            except Exception as e:
-                self.root.after(0, lambda e=str(e): self._status(f"搜索异常: {e[:50]}"))
-                return
-
-            self.root.after(0, lambda: self._status(f"搜到 {len(results)} 首，匹配中..."))
-
-        # Queue up to `count` songs
-        q_words = [w.strip().lower() for w in query.split() if len(w.strip()) > 1]
-        queued = 0
-        boosted_artists = set()
-
-        for song in results:
-            if queued >= count:
-                break
-            top_name = song.get("songname", "")
-            top_artists = " ".join(s.get("name", "") for s in song.get("singer", [])).lower()
-            top_text = f"{top_name} {top_artists}".lower()
+            if search_artist and search_artist.strip():
+                try:
+                    artist_songs = eng.search_artist_hot_songs(search_artist, limit=30)
+                except Exception:
+                    artist_songs = None
 
             if artist_songs:
-                # Artist mode: songs are already top/hot — accept all
-                self.root.after(0, lambda s=song, q=query:
-                    self._queue_and_play_song_request(s, q, play=(queued == 0)))
-                queued += 1
-                for a in song.get("singer", []):
-                    boosted_artists.add(a.get("name", ""))
-            elif q_words:
-                hits = sum(1 for w in q_words if w in top_text)
-                if hits >= len(q_words) * 0.3:
+                # Use artist's hot songs (already sorted by popularity)
+                results = []
+                for s in artist_songs:
+                    results.append({
+                        "songname": s.get("songname", ""),
+                        "songid": s.get("songid", 0),
+                        "duration": s.get("duration", 0),
+                        "singer": [{"name": a.get("name", "")} for a in s.get("singer", [])],
+                        "albumname": s.get("albumname", ""),
+                        "albumid": s.get("albumid", 0),
+                    })
+                self.root.after(0, lambda: self._status(
+                    f"🎤 找到「{search_artist}」{len(results)} 首热门歌曲（按热度排序）"))
+            else:
+                # ── Fallback: keyword search ──
+                try:
+                    limit = max(10, count * 3)  # fetch extra for filtering
+                    data = ncm("/search", {"keywords": query, "limit": limit})
+                    if not data or data.get("code") != 200:
+                        self.root.after(0, lambda: self._status(f"搜索失败，网易云 API 不可达"))
+                        return
+                    raw = data.get("result", {}).get("songs", [])
+                    if not raw:
+                        self.root.after(0, lambda: self._status(f"没搜到「{query}」"))
+                        return
+
+                    results = []
+                    for s in raw:
+                        results.append({
+                            "songname": s.get("name", ""),
+                            "songid": s.get("id", 0),
+                            "duration": s.get("duration", 0),
+                            "singer": [{"name": a.get("name", "")} for a in s.get("artists", [])],
+                            "albumname": s.get("album", {}).get("name", ""),
+                            "albumid": s.get("album", {}).get("id", 0),
+                        })
+                except Exception as e:
+                    self.root.after(0, lambda e=str(e): self._status(f"搜索异常: {e[:50]}"))
+                    return
+
+                self.root.after(0, lambda: self._status(f"搜到 {len(results)} 首，匹配中..."))
+
+            # Queue up to `count` songs
+            q_words = [w.strip().lower() for w in query.split() if len(w.strip()) > 1]
+            queued = 0
+            boosted_artists = set()
+
+            for song in results:
+                if queued >= count:
+                    break
+                top_name = song.get("songname", "")
+                top_artists = " ".join(s.get("name", "") for s in song.get("singer", [])).lower()
+                top_text = f"{top_name} {top_artists}".lower()
+
+                if artist_songs:
+                    # Artist mode: songs are already top/hot — accept all
                     self.root.after(0, lambda s=song, q=query:
                         self._queue_and_play_song_request(s, q, play=(queued == 0)))
                     queued += 1
                     for a in song.get("singer", []):
                         boosted_artists.add(a.get("name", ""))
-            elif query.lower() in top_text:
-                self.root.after(0, lambda s=song, q=query:
-                    self._queue_and_play_song_request(s, q, play=(queued == 0)))
-                queued += 1
-                for a in song.get("singer", []):
+                elif q_words:
+                    hits = sum(1 for w in q_words if w in top_text)
+                    if hits >= len(q_words) * 0.3:
+                        self.root.after(0, lambda s=song, q=query:
+                            self._queue_and_play_song_request(s, q, play=(queued == 0)))
+                        queued += 1
+                        for a in song.get("singer", []):
+                            boosted_artists.add(a.get("name", ""))
+                elif query.lower() in top_text:
+                    self.root.after(0, lambda s=song, q=query:
+                        self._queue_and_play_song_request(s, q, play=(queued == 0)))
+                    queued += 1
+                    for a in song.get("singer", []):
+                        boosted_artists.add(a.get("name", ""))
+
+            # If nothing matched precisely, fall back to top result
+            if queued == 0 and results:
+                # 🆕 If multiple results and no artist specified, show picker
+                if len(results) >= 3 and not artist_name:
+                    self.root.after(0, lambda: self._show_song_picker(results, query))
+                    return
+                top = results[0]
+                self.root.after(0, lambda: self._queue_and_play_song_request(top, query, play=True))
+                for a in top.get("singer", []):
                     boosted_artists.add(a.get("name", ""))
 
-        # If nothing matched precisely, fall back to top result
-        if queued == 0 and results:
-            # 🆕 If multiple results and no artist specified, show picker
-            if len(results) >= 3 and not artist_name:
-                self.root.after(0, lambda: self._show_song_picker(results, query))
-                return
-            top = results[0]
-            self.root.after(0, lambda: self._queue_and_play_song_request(top, query, play=True))
-            for a in top.get("singer", []):
-                boosted_artists.add(a.get("name", ""))
+            # Boost artist weights in taste.json
+            if boosted_artists:
+                self._boost_artist_weights(boosted_artists)
 
-        # Boost artist weights in taste.json
-        if boosted_artists:
-            self._boost_artist_weights(boosted_artists)
-
-        self.root.after(0, lambda: self._status(
-            f"已添加 {queued or 1} 首歌到队列" + (f"，上调 {len(boosted_artists)} 位艺人权重" if boosted_artists else "")))
+            self.root.after(0, lambda: self._status(
+                f"已添加 {queued or 1} 首歌到队列" + (f"，上调 {len(boosted_artists)} 位艺人权重" if boosted_artists else "")))
+        finally:
+            self._song_request_in_flight = False
 
     def _boost_artist_weights(self, artists, boost=0.15):
         """Increase weight for requested artists in taste.json (capped at 1.5)."""

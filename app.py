@@ -35,8 +35,6 @@ from report import handle_command, generate_monthly_report
 
 HOME = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HOME, "data")
-TODAY_FILE = os.path.join(DATA_DIR, "today.json")
-TODAY_FOCUS_FILE = os.path.join(DATA_DIR, "today_focus.json")
 HISTORY_FILE = os.path.join(DATA_DIR, "history.json")
 SESSION_FILE = os.path.join(DATA_DIR, "session.json")
 ART_DIR = os.path.join(DATA_DIR, "covers")

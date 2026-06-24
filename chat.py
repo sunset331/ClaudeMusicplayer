@@ -8,11 +8,8 @@ AI Chat module for music player.
 import json, os, re, time
 import requests
 
-# DeepSeek API endpoint (OpenAI-compatible)
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-
-# Load API key from env or local config file
-DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+# DeepSeek API endpoint (OpenAI-compatible) — from centralized config
+from config import DEEPSEEK_URL, DEEPSEEK_KEY
 
 SYSTEM_PROMPT = """你是用户的音乐伙伴。用户跟你聊天时自然回复即可。
 
@@ -245,15 +242,13 @@ _artist_cache = {"names": [], "lower_map": {}, "mtime": 0}
 
 def _load_artist_cache():
     """Load artist names from taste.json for name extraction."""
-    import os as _os
-    taste_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                               "data", "taste.json")
+    from config import TASTE_FILE
     try:
-        mtime = _os.path.getmtime(taste_path)
+        mtime = os.path.getmtime(TASTE_FILE)
         if mtime == _artist_cache["mtime"] and _artist_cache["names"]:
             return
         _artist_cache["mtime"] = mtime
-        with open(taste_path, "r", encoding="utf-8") as f:
+        with open(TASTE_FILE, "r", encoding="utf-8") as f:
             taste = json.load(f)
         modes = taste.get("modes", {})
         all_names = set()
@@ -325,19 +320,6 @@ def _extract_artist_name(text):
                     return _artist_cache["lower_map"].get(name_lower, name), "partial"
 
     return None, None
-
-
-def _find_artist_in_text(text, target_name):
-    """Check if an artist name appears in the message text.
-    Returns the proper-cased name if found, None otherwise.
-    Handles common Chinese filler words around the name.
-    """
-    _load_artist_cache()
-    text_lower = text.lower()
-    target_lower = target_name.lower()
-    if target_lower in text_lower:
-        return _artist_cache["lower_map"].get(target_lower, target_name)
-    return None
 
 
 def extract_signals(text, current_song=None):

@@ -961,14 +961,6 @@ def score_v3(song, mode_taste, history, user_tags=None):
     return total
 
 
-# Both modes use the unified v3 scorer
-def score_rap(song, mode_taste, history):
-    return score_v3(song, mode_taste, history)
-
-def score_mixed(song, mode_taste, history):
-    return score_v3(song, mode_taste, history)
-
-
 def score_candidates(candidates, mode="rap"):
     """Score all candidates in a pool (v3). Modifies _score in-place."""
     taste = load_taste()

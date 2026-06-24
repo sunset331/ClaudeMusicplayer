@@ -42,7 +42,7 @@ SESSION_FILE = os.path.join(DATA_DIR, "session.json")
 ART_DIR = os.path.join(DATA_DIR, "covers")
 LOGIN_FILE = os.path.join(DATA_DIR, "ncm_cookie.json")
 
-FFPLAY = r"C:\Users\27576\AppData\Local\Microsoft\WinGet\Links\ffplay.exe"
+FFPLAY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "ffplay.exe")
 
 os.makedirs(ART_DIR, exist_ok=True)
 

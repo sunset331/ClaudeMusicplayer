@@ -18,3 +18,4 @@ data/candidates/
 crash.log
 .claude/
 .env
+bin/ffplay.exe

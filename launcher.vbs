@@ -1,84 +1,43 @@
 Set WshShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-projDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
+' Paths
 pythonExe = "F:\miniconda3\python.exe"
-serverScript = projDir & "\backend\server.py"
+projDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
+appScript = projDir & "\app.py"
 
-' Check if server already running
-serverRunning = False
+' Check if already running
+alreadyRunning = False
 On Error Resume Next
-Dim http: Set http = CreateObject("MSXML2.ServerXMLHTTP")
-http.Open "GET", "http://localhost:8765/api/queue", False
-http.SetTimeouts 3000, 3000, 3000, 3000
-http.Send
-If Err.Number = 0 And http.Status = 200 Then serverRunning = True
-On Error Goto 0
-
-If Not serverRunning Then
-    ' Read .env and inject into shell environment
-    Dim envFile, envLines, line, eqPos
-    envFile = projDir & "\.env"
-    If objFSO.FileExists(envFile) Then
-        Dim envContent
-        Set envContent = objFSO.OpenTextFile(envFile, 1)
-        envLines = envContent.ReadAll
-        envContent.Close
-        Dim envShell: Set envShell = CreateObject("WScript.Shell").Environment("Process")
-        For Each line In Split(envLines, vbCrLf)
-            line = Trim(line)
-            If Len(line) > 0 And Left(line, 1) <> "#" Then
-                eqPos = InStr(line, "=")
-                If eqPos > 0 Then
-                    envShell(Mid(line, 1, eqPos - 1)) = Mid(line, eqPos + 1)
-                End If
-            End If
-        Next
-    End If
-
-    ' Start Python backend server
-    WshShell.Run """" & pythonExe & """ """ & serverScript & """", 0, False
-
-    ' Wait up to 30 seconds for server to be ready
-    For i = 1 To 30
-        WScript.Sleep 1000
-        Err.Clear
-        On Error Resume Next
-        Dim http2: Set http2 = CreateObject("MSXML2.ServerXMLHTTP")
-        http2.Open "GET", "http://localhost:8765/api/queue", False
-        http2.SetTimeouts 2000, 2000, 2000, 2000
-        http2.Send
-        If Err.Number = 0 And http2.Status = 200 Then Exit For
-        On Error Goto 0
-    Next
-End If
-
-WScript.Sleep 500
-
-' Launch in app mode — no browser chrome, looks like native window
-chrome = WshShell.ExpandEnvironmentStrings("%LocalAppData%") & "\Google\Chrome\Application\chrome.exe"
-edge = WshShell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & "\Microsoft\Edge\Application\msedge.exe"
-
-Dim browserExe, foundBrowser
-foundBrowser = False
-
-' Check Edge first (it's installed), then Chrome, then all common paths
-Dim browsers(4)
-browsers(0) = edge
-browsers(1) = chrome
-browsers(2) = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-browsers(3) = "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-
-For i = 0 To 3
-    If objFSO.FileExists(browsers(i)) Then
-        browserExe = browsers(i)
-        foundBrowser = True
+Set wmi = GetObject("winmgmts:\\.\root\cimv2")
+Set procs = wmi.ExecQuery("SELECT CommandLine FROM Win32_Process WHERE Name='python.exe'")
+For Each proc In procs
+    If InStr(proc.CommandLine, "app.py") > 0 Then
+        alreadyRunning = True
         Exit For
     End If
 Next
+On Error Goto 0
 
-If foundBrowser Then
-    WshShell.Run """" & browserExe & """ --app=http://localhost:8765 --window-size=1200,800"
-Else
-    WshShell.Run "http://localhost:8765"
+If Not alreadyRunning Then
+    ' Load .env
+    Dim envFile, envShell, line, eqPos, content
+    envFile = projDir & "\.env"
+    If objFSO.FileExists(envFile) Then
+        Set envShell = CreateObject("WScript.Shell").Environment("Process")
+        Set content = objFSO.OpenTextFile(envFile, 1)
+        Do Until content.AtEndOfStream
+            line = Trim(content.ReadLine)
+            If Len(line) > 0 And Left(line, 1) <> "#" Then
+                eqPos = InStr(line, "=")
+                If eqPos > 0 Then
+                    envShell(Left(line, eqPos - 1)) = Mid(line, eqPos + 1)
+                End If
+            End If
+        Loop
+        content.Close
+    End If
+
+    ' Start the app
+    WshShell.Run """" & pythonExe & """ """ & appScript & """", 1, False
 End If

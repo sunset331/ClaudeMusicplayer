@@ -396,26 +396,32 @@ def extract_signals(text, current_song=None):
 
 
 def _call_api(messages, max_tokens=600, temperature=0.85):
-    """Call DeepSeek API. Returns reply text or None."""
+    """Call DeepSeek API with exponential backoff retry.
+    Returns reply text or None if all retries exhausted."""
     if not DEEPSEEK_KEY:
         return None
-    try:
-        r = requests.post(DEEPSEEK_URL,
-            headers={
-                "Authorization": f"Bearer {DEEPSEEK_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "deepseek-v4-flash",
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-            },
-            timeout=15)
-        if r.ok:
-            return r.json()["choices"][0]["message"]["content"].strip()
-    except Exception:
-        pass
+    delays = [0, 2, 4]  # 3 attempts: immediate, 2s, 4s
+    for attempt, delay in enumerate(delays):
+        try:
+            if delay > 0:
+                time.sleep(delay)
+            r = requests.post(DEEPSEEK_URL,
+                headers={
+                    "Authorization": f"Bearer {DEEPSEEK_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "deepseek-v4-flash",
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                },
+                timeout=25)
+            if r.ok:
+                return r.json()["choices"][0]["message"]["content"].strip()
+        except Exception:
+            if attempt < len(delays) - 1:
+                continue
     return None
 
 

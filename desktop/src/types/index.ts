@@ -24,7 +24,7 @@ export interface ChatMessage {
 }
 
 export type PlaybackState = 'idle' | 'loading' | 'playing' | 'paused'
-export type AppMode = 'rap' | 'mixed'
+export type AppMode = 'rap' | 'mixed' | 'focus'
 export type FluidSpeed = 'slow' | 'medium' | 'fast'
 export type ShaderMood = 'normal' | 'excited' | 'calm'
 export type DisplayMode = 'pigment' | 'soft'

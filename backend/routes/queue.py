@@ -55,10 +55,10 @@ async def get_stats():
 
 @router.post("/api/mode")
 async def switch_mode(body: dict):
-    """Switch between rap/mixed mode."""
+    """Switch between rap / mixed / focus modes."""
     new_mode = body.get("mode", "rap")
-    if new_mode not in ("rap", "mixed"):
-        return {"ok": False, "error": "Invalid mode"}
+    if new_mode not in ("rap", "mixed", "focus"):
+        return {"ok": False, "error": f"Invalid mode: {new_mode}"}
     with state.read() as st:
         st["mode"] = new_mode
         st["songs"] = []

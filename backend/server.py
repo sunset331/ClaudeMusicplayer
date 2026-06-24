@@ -6,6 +6,7 @@ Creates the FastAPI app, mounts routers, and starts background services.
 
 import sys
 import os
+import json
 import threading
 import logging
 
@@ -39,6 +40,7 @@ DATA_DIR = os.path.join(HOME, "data")
 ART_DIR = os.path.join(DATA_DIR, "covers")
 DIST_DIR = os.path.join(HOME, "desktop", "dist")
 ASSETS_DIR = os.path.join(DIST_DIR, "assets")
+SESSION_FILE = os.path.join(DATA_DIR, "session.json")
 
 # ── Global state (singleton) ──
 state = get_state()
@@ -98,6 +100,29 @@ async def serve_index():
     if os.path.isfile(_INDEX_PATH):
         return FileResponse(_INDEX_PATH)
     return HTMLResponse("<h1>Frontend not built. Run: cd desktop && npx vite build</h1>", status_code=503)
+
+
+# ── now-playing bridge: read session.json written by tkinter app.py ──
+@app.get("/api/now-playing")
+async def now_playing():
+    """Return current song from the session bridge (written by app.py)."""
+    try:
+        if os.path.exists(SESSION_FILE):
+            with open(SESSION_FILE, "r", encoding="utf-8") as f:
+                session = json.load(f)
+            cs = session.get("current_song")
+            if cs and cs.get("songid"):
+                return {
+                    "songname": cs.get("songname", ""),
+                    "singers": cs.get("singers", ""),
+                    "is_playing": session.get("is_playing", False),
+                    "volume": session.get("volume", 1.0),
+                    "mode": session.get("mode", "rap"),
+                    "mood_radio": session.get("mood_radio"),
+                }
+    except Exception:
+        pass
+    return {"songname": None, "singers": None, "is_playing": False}
 
 
 # ── Entry ──

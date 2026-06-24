@@ -151,6 +151,7 @@ class MusicPlayer:
         _cleanup_ffplay = self._stop_ffplay
         self.playlist_rap = None
         self.playlist_mixed = None
+        self.playlist_focus = None
         self.candidates = []
         self._candidates_lock = threading.Lock()
         self.play_count = 0
@@ -162,6 +163,7 @@ class MusicPlayer:
         self._epsilon = 0.15  # bandit exploration rate
         self._chat_history = []
         self._chat_history_lock = threading.Lock()
+        self._reload_pending = False  # anti-reentry guard for _reload_list
 
         # ── New modules (Phase 1-3) ──
         self.ART_DIR = ART_DIR
@@ -205,7 +207,8 @@ class MusicPlayer:
 
         self.root.after(100, self._init_data)
         self.root.after(200, lambda: self.mode_btn.config(
-            text="混合模式" if self.mode == "mixed" else "RAP 模式"))
+            text={"rap": "RAP 模式", "mixed": "混合模式", "focus": "专注模式"}.get(self.mode, self.mode)))
+        self.root.after(300, self._restore_mood_radio)  # restore after init_data
         self.root.after(500, self._check_login)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._watch_playback()
@@ -728,6 +731,7 @@ class MusicPlayer:
 
         # Other buttons
         tk.Button(bar, text="刷新", command=self._refresh, **bs).pack(side=tk.LEFT, pady=Sp.SM)
+        tk.Button(bar, text="🌙 定时", command=self._sleep_timer_popup, **bs).pack(side=tk.LEFT, pady=Sp.SM)
         tk.Button(bar, text="登录", command=self._login, **bs).pack(side=tk.LEFT, pady=Sp.SM)
         tk.Button(bar, text="网页", command=self._open_ne, **bs).pack(side=tk.LEFT, pady=Sp.SM)
         tk.Button(bar, text="导入歌单", command=self._import_playlist, **bs).pack(side=tk.LEFT, pady=Sp.SM)
@@ -890,15 +894,41 @@ class MusicPlayer:
     # ============================================================
 
     def _save_session(self):
-        """Save current playback state so we can resume later."""
+        """Save current playback state so we can resume later.
+        Also serves as the state bridge for the Web console (FastAPI reads this)."""
         songid = None
+        songname = None
+        singers = None
         if self.songs and self.idx < len(self.songs):
-            songid = self.songs[self.idx].get("songid")
+            song = self.songs[self.idx]
+            songid = song.get("songid")
+            songname = song.get("songname", "")
+            singers = " / ".join(x.get("name", "") for x in song.get("singer", []))
+        # Build a rich-enough snapshot so the Web console can display "now playing"
+        queue_preview = []
+        with self._candidates_lock:
+            unplayed = [s for s in self.candidates if not s.get("_played", False)]
+            for s in unplayed[:5]:
+                queue_preview.append({
+                    "songid": s.get("songid"),
+                    "songname": s.get("songname", ""),
+                    "artist": " / ".join(a.get("name", "") for a in s.get("singer", [])),
+                })
         state = {
             "mode": self.mode,
             "last_songid": songid,
             "epsilon": getattr(self, '_epsilon', 0.15),
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            # ── Web console bridge ──
+            "current_song": {"songid": songid, "songname": songname, "singers": singers} if songid else None,
+            "is_playing": self._is_playing(),
+            "volume": round(self._volume, 2),
+            "mood_radio": {
+                "active": self._mood_radio.active,
+                "mood_key": getattr(self._mood_radio, 'mood_key', None),
+                "songs_played": getattr(self._mood_radio, 'songs_played', 0),
+            } if self._mood_radio.active else None,
+            "queue_preview": queue_preview,
         }
         try:
             with open(SESSION_FILE, "w", encoding="utf-8") as f:
@@ -915,6 +945,23 @@ class MusicPlayer:
                 return json.load(f)
         except Exception:
             return None
+
+    def _restore_mood_radio(self):
+        """Restore Mood Radio state from session after init_data."""
+        prev = self._load_session()
+        if not prev:
+            return
+        mr = prev.get("mood_radio")
+        if mr and mr.get("active") and mr.get("mood_key"):
+            # Only restore if within the 10-song limit
+            played = mr.get("songs_played", 0)
+            if played < 10:
+                self._mood_radio.active = True
+                self._mood_radio.mood_key = mr["mood_key"]
+                self._mood_radio.songs_played = played
+                mood_label = mr["mood_key"]
+                self._mood_status_lbl.config(text=self._mood_radio.status_text())
+                self._chat_append("系统", f"🎵 已恢复上次的情绪电台")
 
     def _load_chat_context(self):
         """Load history + taste + per-song stats for AI context."""
@@ -1003,19 +1050,21 @@ class MusicPlayer:
                 return True
         return False
 
-    def _init_data(self):
-        """Initialize data: build candidates or load from cache."""
+    def _init_data(self, force_rebuild=False):
+        """Initialize data: build candidates or load from cache.
+        Set force_rebuild=True to skip cache (mode switch, manual refresh)."""
         today = datetime.now().strftime("%Y-%m-%d")
-        cached = eng.load_candidates(self.mode)
-        if cached and cached.get("built_at", "")[:10] == today and cached.get("songs"):
-            with self._candidates_lock:
-                self.candidates = cached["songs"]
-            # Mark already-judged songs so they don't re-enter the queue
-            with self._candidates_lock:
-                eng.mark_judged_songs(self.candidates)
-            self._status(f"已加载 {len(self.candidates)} 首缓存歌曲")
-            self._reload_list()
-            return
+        if not force_rebuild:
+            cached = eng.load_candidates(self.mode)
+            if cached and cached.get("built_at", "")[:10] == today and cached.get("songs"):
+                with self._candidates_lock:
+                    self.candidates = cached["songs"]
+                # Mark already-judged songs so they don't re-enter the queue
+                with self._candidates_lock:
+                    eng.mark_judged_songs(self.candidates)
+                self._status(f"已加载 {len(self.candidates)} 首缓存歌曲")
+                self._reload_list()
+                return
 
         self._status("正在构建候选池...")
         def _r():
@@ -1033,7 +1082,17 @@ class MusicPlayer:
     def _reload_list(self, resort=True):
         """Refresh treeview from candidates, dimming played songs.
         If resort=False, keep current ordering (used during rescore to avoid
-        shuffling the queue and skipping songs while playing)."""
+        shuffling the queue and skipping songs while playing).
+
+        Anti-reentry: if a reload is already scheduled, skip this call.
+        The pending reload will pick up the latest candidates state."""
+        if self._reload_pending:
+            return
+        self._reload_pending = True
+        self.root.after(0, lambda: self._do_reload_list(resort))
+
+    def _do_reload_list(self, resort):
+        self._reload_pending = False
         with self._candidates_lock:
             all_songs = self.candidates[:]
         if not all_songs:
@@ -1079,7 +1138,8 @@ class MusicPlayer:
                              values=(marker, s.get("songname", ""),
                                      singers, f"{s.get('_score', 0):.2f}"),
                              tags=tags)
-        mode_label = "RAP 模式" if self.mode == "rap" else "混合模式"
+        mode_labels = {"rap": "RAP 模式", "mixed": "混合模式", "focus": "专注模式"}
+        mode_label = mode_labels.get(self.mode, self.mode)
         self._status(f"{mode_label}: {len(unplayed)} 首待播 — 池中 {len(self.songs)} 首")
 
         if unplayed and not self._is_playing() and not getattr(self, '_skip_in_progress', False):
@@ -1840,13 +1900,25 @@ class MusicPlayer:
                 self.playlist_mixed = d2.get("id") or d2.get("playlist", {}).get("id")
                 self.root.after(0, lambda: self._status("已创建歌单「Claude Picks」"))
 
+        # Focus playlist
+        if "Claude Focus" in names:
+            self.playlist_focus = names["Claude Focus"]
+        else:
+            d2 = ncm("/playlist/create", {"name": "Claude Focus", "privacy": 0})
+            if d2 and (d2.get("code") == 200 or d2.get("id")):
+                self.playlist_focus = d2.get("id") or d2.get("playlist", {}).get("id")
+                self.root.after(0, lambda: self._status("已创建歌单「Claude Focus」"))
+
         # Cache playlist track IDs for dedup
         self._block_ids_rap = None
         self._block_ids_mixed = None
+        self._block_ids_focus = None
         if self.playlist_rap:
             self._block_ids_rap = eng.get_playlist_track_ids(self.playlist_rap)
         if self.playlist_mixed:
             self._block_ids_mixed = eng.get_playlist_track_ids(self.playlist_mixed)
+        if self.playlist_focus:
+            self._block_ids_focus = eng.get_playlist_track_ids(self.playlist_focus)
         return True
 
     def _get_playlist_block_ids(self, mode=None):
@@ -1858,7 +1930,8 @@ class MusicPlayer:
         cached = getattr(self, cache_attr, None)
         if cached is not None:
             return cached
-        pid = self.playlist_rap if mode == "rap" else self.playlist_mixed
+        pid_map = {"rap": self.playlist_rap, "mixed": self.playlist_mixed, "focus": self.playlist_focus}
+        pid = pid_map.get(mode)
         ids = eng.get_playlist_track_ids(pid) if pid else set()
         setattr(self, cache_attr, ids)
         return ids
@@ -2082,6 +2155,10 @@ class MusicPlayer:
 
         # If nothing matched precisely, fall back to top result
         if queued == 0 and results:
+            # 🆕 If multiple results and no artist specified, show picker
+            if len(results) >= 3 and not artist_name:
+                self.root.after(0, lambda: self._show_song_picker(results, query))
+                return
             top = results[0]
             self.root.after(0, lambda: self._queue_and_play_song_request(top, query, play=True))
             for a in top.get("singer", []):
@@ -2163,8 +2240,9 @@ class MusicPlayer:
                 self._play_current()
                 singers = " / ".join(x.get("name", "") for x in song.get("singer", []))
                 self._status(f"已点歌: {song.get('songname','')} — {singers}")
-            # Refresh tree in background
-            self.root.after(500, lambda: self._reload_list(resort=False))
+            # 🆕 Refresh tree with resort=True so the 9.99-scored song appears at top
+            # Use after_idle instead of hardcoded 500ms for reliable scheduling
+            self.root.after_idle(lambda: self._reload_list(resort=True))
         else:
             self._status(f"点歌失败: 歌曲未找到")
 
@@ -2277,12 +2355,12 @@ class MusicPlayer:
         sid = self.songs[self.idx].get("songid", 0)
         if not sid:
             return
-        pl_id = self.playlist_rap if self.mode == "rap" else self.playlist_mixed
-        pl_name = "Claude Rap" if self.mode == "rap" else "Claude Picks"
+        PL_MAP = {"rap": (self.playlist_rap, "Claude Rap"), "mixed": (self.playlist_mixed, "Claude Picks"), "focus": (self.playlist_focus, "Claude Focus")}
+        pl_id, pl_name = PL_MAP.get(self.mode, (None, None))
         if not pl_id:
             # Try to re-fetch playlists — user may have logged in since last check
             self._find_playlist()
-            pl_id = self.playlist_rap if self.mode == "rap" else self.playlist_mixed
+            pl_id, pl_name = PL_MAP.get(self.mode, (None, None))
             if not pl_id:
                 self._status("请先登录网易云!")
                 return
@@ -2407,13 +2485,22 @@ class MusicPlayer:
                 self._play_song(s)
 
     def _tgl_mode(self):
-        self.mode = "mixed" if self.mode == "rap" else "rap"
+        """Cycle rap → mixed → focus → rap, forcing a full candidate rebuild each time."""
+        MODES = ["rap", "mixed", "focus"]
+        MODE_LABELS = {"rap": "RAP 模式", "mixed": "混合模式", "focus": "专注模式"}
+        idx = MODES.index(self.mode) if self.mode in MODES else 0
+        self.mode = MODES[(idx + 1) % 3]
         self._save_session()
-        self.mode_btn.config(text="混合模式" if self.mode == "mixed" else "RAP 模式")
+        self.mode_btn.config(text=MODE_LABELS.get(self.mode, self.mode))
         self._stop_ffplay()
         self.play_count = 0
         self._simi_queue = []
-        self._init_data()
+        # Clear block-id caches so the new mode fetches fresh playlist data
+        self._block_ids_rap = None
+        self._block_ids_mixed = None
+        self._block_ids_focus = None
+        # force_rebuild=True: skip today's cache, always build fresh candidates
+        self._init_data(force_rebuild=True)
 
     def _refresh(self):
         self._status("正在重建候选池...")
@@ -2421,6 +2508,9 @@ class MusicPlayer:
         self.play_count = 0
         with self._simi_queue_lock:
             self._simi_queue = []
+        # 🆕 Force-refresh block lists so we don't re-add songs already in playlists
+        self._block_ids_rap = None
+        self._block_ids_mixed = None
         def _r():
             try:
                 block_ids = self._get_playlist_block_ids()
@@ -2461,7 +2551,8 @@ class MusicPlayer:
         self.root.destroy()
 
     def _smart_dj_interject(self):
-        """Run Smart DJ interjection in background and show in chat."""
+        """Run Smart DJ interjection in background and show in chat.
+        If DJ suggests a genre, search and insert relevant songs into the queue."""
         try:
             msg, action = self._smart_dj.ask_dj()
             if msg:
@@ -2472,8 +2563,123 @@ class MusicPlayer:
                     if genre:
                         self.root.after(0, lambda: self._status(
                             f"DJ 推荐: {genre}/{mood}" if mood else f"DJ 推荐: {genre}"))
+                        # 🆕 DJ 主动推送: 搜索该 genre 的歌曲插入队列
+                        threading.Thread(
+                            target=lambda: self._dj_push_songs(genre, mood),
+                            daemon=True).start()
         except Exception:
             pass
+
+    def _dj_push_songs(self, genre, mood=None):
+        """Search for 3 top songs in the DJ-recommended genre and insert into queue."""
+        try:
+            query = f"{genre} {mood}" if mood else genre
+            data = ncm("/search", {"keywords": query, "limit": 5})
+            if not data or data.get("code") != 200:
+                return
+            raw = data.get("result", {}).get("songs", [])
+            if not raw:
+                return
+            pushed = 0
+            for s in raw[:5]:
+                if pushed >= 3:
+                    break
+                song = {
+                    "songname": s.get("name", ""),
+                    "songid": s.get("id", 0),
+                    "duration": s.get("duration", 0),
+                    "singer": [{"name": a.get("name", "")} for a in s.get("artists", [])],
+                    "albumname": s.get("album", {}).get("name", ""),
+                    "albumid": s.get("album", {}).get("id", 0),
+                    "_sources": [f"dj:{genre}"],
+                    "_score": 8.5,
+                    "_played": False,
+                    "_from_simi": False,
+                }
+                with self._candidates_lock:
+                    sid = str(song["songid"])
+                    if sid not in {str(c["songid"]) for c in self.candidates}:
+                        # Insert after current position
+                        insert_pos = min(self.idx + 1 + pushed, len(self.candidates))
+                        self.candidates.insert(insert_pos, song)
+                        pushed += 1
+            if pushed > 0:
+                self.root.after(0, lambda: self._chat_append(
+                    "沧溟", f"🎧 为你准备了 {pushed} 首 {genre} 风格的歌曲～"))
+                self.root.after(0, lambda: self._reload_list(resort=False))
+        except Exception:
+            pass
+
+    def _sleep_timer_popup(self):
+        """Show sleep timer options popup."""
+        self._sleep_timer = getattr(self, '_sleep_timer', 0)  # remaining seconds
+        dlg = tk.Toplevel(self.root)
+        dlg.title("睡眠定时器")
+        dlg.geometry("300x320")
+        dlg.configure(bg=BG_MAIN)
+        dlg.transient(self.root)
+        dlg.grab_set()
+
+        tk.Label(dlg, text="🌙 定时停止播放", font=("Microsoft YaHei", 13, "bold"),
+                 fg=FG_BRIGHT, bg=BG_MAIN).pack(pady=(14, 8))
+
+        status_text = f"当前: {self._sleep_timer // 60} 分钟后停止" if self._sleep_timer > 0 else "未设置"
+        status_lbl = tk.Label(dlg, text=status_text, font=("Microsoft YaHei", 11),
+                              fg=FG_DIM, bg=BG_MAIN)
+        status_lbl.pack(pady=(0, 10))
+
+        bs = {"font": ("Microsoft YaHei", 12), "bg": BG_CARD, "fg": FG,
+              "activebackground": BG_SEL, "activeforeground": "#fff",
+              "relief": tk.FLAT, "cursor": "hand2", "bd": 0,
+              "width": 20, "height": 1}
+
+        def _set_and_close(mins):
+            self._sleep_timer = mins * 60
+            self.root.after(1000, self._tick_sleep_timer)
+            self._status(f"🌙 睡眠定时: {mins} 分钟后停止")
+            show_toast("定时器", f"{mins} 分钟后停止播放")
+            dlg.destroy()
+
+        def _cancel():
+            self._sleep_timer = 0
+            self._status("睡眠定时器已取消")
+            dlg.destroy()
+
+        for mins in [15, 30, 45, 60]:
+            tk.Button(dlg, text=f"{mins} 分钟", command=lambda m=mins: _set_and_close(m), **bs
+                     ).pack(pady=3)
+
+        tk.Label(dlg, text="", bg=BG_MAIN, height=1).pack()
+        tk.Button(dlg, text="取消定时", command=_cancel, font=("Microsoft YaHei", 12),
+                  bg="#1a1028", fg=C.WARN, relief=tk.FLAT, cursor="hand2",
+                  bd=0, padx=20, pady=6).pack(pady=(4, 8))
+
+    def _tick_sleep_timer(self):
+        """Countdown sleep timer. Called every second while active."""
+        if self._sleep_timer <= 0:
+            return
+        self._sleep_timer -= 1
+        mins_rem = self._sleep_timer // 60
+        secs_rem = self._sleep_timer % 60
+
+        if self._sleep_timer <= 3:
+            # Last 3 seconds: fade out
+            fade_vol = max(0, int(self._volume * 100 * (self._sleep_timer / 3)))
+            self._set_volume(fade_vol)
+            self._status(f"🌙 即将停止... ({secs_rem}s)")
+
+        if self._sleep_timer <= 0:
+            self._stop_ffplay()
+            self._set_volume(100)  # restore volume for next play
+            self._status("🌙 睡眠定时结束，播放已停止")
+            show_toast("睡眠定时器", "播放已停止，晚安 🌙")
+            return
+
+        # Update status every 10s
+        if self._sleep_timer % 10 == 0:
+            self._status(f"🌙 {mins_rem}:{secs_rem:02d} 后停止")
+
+        self.root.after(1000, self._tick_sleep_timer)
 
     def _status(self, t):
         try:

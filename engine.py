@@ -62,6 +62,18 @@ TASTE_V2_DEFAULT = {
             "artist_weights": {},
             "genre_weights": {},
         },
+        "focus": {
+            "seed_playlists": [],
+            "top_artists": [],
+            "artist_weights": {},
+            "genre_weights": {
+                "ambient": 0.5,
+                "lo-fi": 0.5,
+                "jazz": 0.3,
+                "classical": 0.3,
+                "electronic": 0.2,
+            },
+        },
     },
     "claude_picks": {
         "playlist_id": None,
@@ -529,6 +541,8 @@ def build_candidates(mode="rap", extra_block_ids=None):
     # Source 2: Genre queries
     if mode == "rap":
         genre_queries = RAP_GENRE_QUERIES
+    elif mode == "focus":
+        genre_queries = FOCUS_GENRE_QUERIES
     else:
         genre_queries = MIXED_GENRE_QUERIES
     for query in genre_queries[:24]:
@@ -553,6 +567,9 @@ def build_candidates(mode="rap", extra_block_ids=None):
     print(f"  [build {mode}] Fetching charts...")
     if mode == "rap":
         chart_ids = [(19723756, "soaring"), (3779629, "new"), (3778678, "hot")]
+    elif mode == "focus":
+        # Focus mode: lighter, chill charts
+        chart_ids = [(19723756, "soaring"), (71384707, "light"), (2884035, "original")]
     else:
         chart_ids = [(19723756, "soaring"), (3778678, "hot"),
                       (71384707, "light"), (2884035, "original")]
@@ -578,7 +595,7 @@ def _load_artist_cache():
                 return json.load(f)
         except Exception:
             import traceback
-            print(f"  [WARN] Failed to parse seed file {seed_file}: {traceback.format_exc()}")
+            print(f"  [WARN] Failed to load artist-id cache from {ARTIST_ID_FILE}: {traceback.format_exc()}")
             pass
     return {}
 

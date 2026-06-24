@@ -62,10 +62,10 @@ export default function TopBar({ fluidSpeed, onSpeedChange, playCount, mode, onM
         )}
       </div>
 
-      {/* Center: mode switch */}
+      {/* Center: mode switch (3 modes for web remote) */}
       {onModeChange && (
         <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 2 }}>
-          {(['rap', 'mixed'] as AppMode[]).map((m) => (
+          {(['rap', 'mixed', 'focus'] as AppMode[]).map((m) => (
             <button key={m}
               onClick={() => onModeChange(m)}
               style={{

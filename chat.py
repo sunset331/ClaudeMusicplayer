@@ -25,7 +25,11 @@ SYSTEM_PROMPT = """你是用户的音乐伙伴。用户跟你聊天时自然回�
 * 用户在点歌（系统会自动切，你不要插手）
 * 你不确定的时候
 
-格式：`[切歌]` 单独放在回复末尾。
+格式：在回复的最后一行单独写 `[切歌]`，前后不要加其他文字。
+例如：
+  "这首歌不太适合现在的氛围。[切歌]"
+  "好的，帮你切掉～[切歌]"
+注意：`[切歌]` 前面可以有标点或空格，后面不能有其他内容。
 
 当前播放：{context}
 用中文回复。"""
@@ -43,9 +47,7 @@ SIGNAL_RULES = [
     (r"太吵了|太闹|想安静|轻一点|柔一点|柔和", "prefer_calm", 0.08),
     (r"别再推|不要再推|不要推|别放了|少放点|听吐了|听烦了", "skip_artist", 0.15),
     (r"不想听|不要|别推|够了|腻|又是", "skip_artist", 0.05),
-    # Mood signals
-    (r"开心|高兴|快乐|happy|兴奋", "mood_happy", 0.03),
-    (r"难过|伤心|sad|低落|emo|沮丧", "mood_sad", 0.03),
+    # Mood signals (handled by Mood Radio in smart_dj.py, not engine scoring)
     (r"放松|chill|relax|躺|睡觉|休息", "prefer_calm", 0.06),
     (r"运动|跑步|健身|workout|锻炼|gym", "prefer_energetic", 0.06),
     # Discovery
@@ -56,7 +58,7 @@ SIGNAL_RULES = [
 ]
 
 
-def _song_context(song, history=None, taste=None, song_stats=None):
+def _song_context(song, history=None, taste=None, song_stats=None, session_stats=None):
     """Build a rich context string from real data for the AI companion.
 
     Only includes VERIFIABLE facts from the data. No speculation.
@@ -107,6 +109,17 @@ def _song_context(song, history=None, taste=None, song_stats=None):
         mode = taste.get("_mode", "")
         if mode:
             parts.append(f"当前模式：{mode}")
+
+    # Session-level aggregates (AI awareness of overall state)
+    if session_stats:
+        total = session_stats.get("total_played", 0)
+        if total > 0:
+            parts.append(f"本次会话已播放{total}首")
+        if session_stats.get("mood_radio_active"):
+            parts.append(f"情绪电台: {session_stats.get('mood_radio_label', '')}")
+        rem = session_stats.get("queue_remaining", -1)
+        if rem >= 0:
+            parts.append(f"队列剩余{rem}首")
 
     return "；".join(parts)
 
@@ -177,31 +190,45 @@ def extract_song_request(text):
       "想听3首周杰伦" → ("周杰伦", 3, "周杰伦")
     """
     import re as _re
-    triggers = r"来首|来一首|来点|来几首|放一首|放个|放[ ]|想听|要听|播一下|播首|播个|播[ ]|换一首|切到|点一首|点歌|点首|点个"
-    m = _re.search(f"({triggers})\\s*", text)
-    if not m:
-        return None
 
-    query = text[m.end():].strip()
-    if not query:
-        return None
-
-    # Parse quantity: 五首/3首/一首/N首/几首
-    count = 1
+    # ── Pre-scan: "来N首X" / "要N首X" — parse quantity before trigger matching ──
     cn_digits = {"一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
-                 "六": 6, "七": 7, "八": 8, "九": 9, "十": 10, "几": 3}
-    qty_patterns = [
-        (r'(\d+)\s*首', lambda g: int(g)),           # "3首" → 3
-        (r'([一二两三四五六七八九十几])\s*首', lambda g: cn_digits.get(g, 1)),  # "五首" → 5
-        (r'(\d+)\s*个', lambda g: int(g)),           # "3个" → 3
-        (r'(\d+)\s*支', lambda g: int(g)),           # "3支" → 3
-    ]
-    for pat, fn in qty_patterns:
-        qm = _re.search(pat, query)
-        if qm:
-            count = min(10, max(1, fn(qm.group(1))))
-            query = query[:qm.start()] + " " + query[qm.end():]
-            break
+                 "六": 6, "七": 7, "八": 8, "九": 9, "十": 10, "几": 5}
+    pre_qty = _re.search(
+        r'(来|要|放|播|点)\s*(\d+|[一二两三四五六七八九十几])\s*首\s*(.+)', text)
+    if pre_qty:
+        raw_digit = pre_qty.group(2)
+        count = min(10, max(1, int(raw_digit) if raw_digit.isdigit()
+                              else cn_digits.get(raw_digit, 5)))
+        query = pre_qty.group(3).strip()
+        skip_trigger = True
+    else:
+        count = 1
+        skip_trigger = False
+
+    if not skip_trigger:
+        triggers = r"来首|来一首|来点|来几首|放一首|放个|放[ ]|想听|要听|播一下|播首|播个|播[ ]|换一首|切到|点一首|点歌|点首|点个"
+        m = _re.search(f"({triggers})\\s*", text)
+        if not m:
+            return None
+
+        query = text[m.end():].strip()
+        if not query:
+            return None
+
+        # Parse quantity: 五首/3首/一首/N首/几首 (already parsed by pre-scan if matched)
+        qty_patterns = [
+            (r'(\d+)\s*首', lambda g: int(g)),           # "3首" → 3
+            (r'([一二两三四五六七八九十几])\s*首', lambda g: cn_digits.get(g, 1)),  # "五首" → 5
+            (r'(\d+)\s*个', lambda g: int(g)),           # "3个" → 3
+            (r'(\d+)\s*支', lambda g: int(g)),           # "3支" → 3
+        ]
+        for pat, fn in qty_patterns:
+            qm = _re.search(pat, query)
+            if qm:
+                count = min(10, max(1, fn(qm.group(1))))
+                query = query[:qm.start()] + " " + query[qm.end():]
+                break
 
     # ── Artist name detection ──
     # Patterns that indicate the user is requesting songs BY an artist:
@@ -225,6 +252,10 @@ def extract_song_request(text):
         name_pattern = r'^[一-鿿]{2,4}$|^[a-zA-Z][a-zA-Z\s\.\'-]{1,30}$'
         if _re.match(name_pattern, query):
             artist_name = query
+
+    # Default to 5 songs when artist detected without explicit quantity
+    if count == 1 and artist_name:
+        count = 5
 
     # Clean Chinese filler particles for better search
     filler = r'[的了啊吧呢吗哈呗嘛呀哦嗯哟]'
@@ -331,7 +362,7 @@ def extract_signals(text, current_song=None):
       1. Extracted from user message (e.g., "想听Drake的歌" → Drake)
       2. Fallback to current song's primary artist
     """
-    _load_artist_cache()
+    # _extract_artist_name already calls _load_artist_cache() — no need to call it here
     signals = []
 
     # Determine the artist being referenced
@@ -407,13 +438,23 @@ def _call_api(messages, max_tokens=600, temperature=0.85):
     return None
 
 
-def send_message(user_text, current_song, history_msgs, history=None, taste=None, song_stats=None):
+def send_message(user_text, current_song, history_msgs, history=None, taste=None,
+                 song_stats=None, session_stats=None):
     """
     User-initiated chat message.
     Returns (reply_text, signals).
     """
-    context = _song_context(current_song, history=history, taste=taste, song_stats=song_stats)
+    context = _song_context(current_song, history=history, taste=taste,
+                           song_stats=song_stats, session_stats=session_stats)
     system = SYSTEM_PROMPT.format(context=context)
+    # Append Smart DJ observations if available
+    if session_stats and session_stats.get("dj_context"):
+        dj = session_stats["dj_context"]
+        dj_str = "\n\n【Smart DJ 最近观察】\n"
+        dj_str += dj.get("recent_history", "")
+        dj_str += f"\n反馈: 喜欢{dj.get('liked',0)}/跳过{dj.get('skipped',0)}/中性{dj.get('neutral',0)}\n"
+        dj_str += f"时段: {dj.get('time_vibe', '')}"
+        system += dj_str
     messages = [{"role": "system", "content": system}]
     if history_msgs:
         messages.extend(history_msgs[-20:])
@@ -428,12 +469,14 @@ def send_message(user_text, current_song, history_msgs, history=None, taste=None
     return reply, signals
 
 
-def send_event(event_type, song, history_msgs, history=None, taste=None, song_stats=None):
+def send_event(event_type, song, history_msgs, history=None, taste=None,
+               song_stats=None, session_stats=None):
     """
     System-triggered event: song_change, like, skip, add_playlist.
     Returns (reply_text, signals) or (None, []) if API fails.
     """
-    context = _song_context(song, history=history, taste=taste, song_stats=song_stats)
+    context = _song_context(song, history=history, taste=taste,
+                           song_stats=song_stats, session_stats=session_stats)
     system = SYSTEM_PROMPT.format(context=context)
     messages = [{"role": "system", "content": system}]
     if history_msgs:
@@ -441,7 +484,7 @@ def send_event(event_type, song, history_msgs, history=None, taste=None, song_st
 
     # Build event message from real data (no fabricated stories)
     event_msg = build_event_context(event_type, song, history=history, song_stats=song_stats)
-    messages.append({"role": "user", "content": event_msg})
+    messages.append({"role": "system", "content": event_msg})
 
     # Don't extract signals from system events (would be noisy)
     reply = _call_api(messages, max_tokens=800, temperature=0.9)

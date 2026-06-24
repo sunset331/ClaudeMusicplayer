@@ -181,7 +181,7 @@ def _handle_chat_signals(signals: list, text: str, state):
         req = chat_mod.extract_song_request(text)
         if req:
             query, count, artist = req
-            count = min(count or 3, 5)
+            count = min(count or 5, 10)  # default 5, max 10
             log.info("Song request: query=%s count=%d artist=%s", query, count, artist)
             results = eng.search_songs(query, count + 5) if hasattr(eng, 'search_songs') else []
             if not results:

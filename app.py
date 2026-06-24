@@ -28,7 +28,10 @@ import engine as eng
 from api.ncm_client import _session, load_cookie, ncm
 
 from tray import SystemTray, TaskbarHelper, show_toast
-from hotkeys import GlobalHotkeyListener
+try:
+    from hotkeys import GlobalHotkeyListener
+except ImportError:
+    GlobalHotkeyListener = None
 from mini_player import MiniPlayer, DesktopLyrics
 from smart_dj import SmartDJ, MoodRadio, detect_mood
 from report import handle_command, generate_monthly_report
@@ -201,8 +204,11 @@ class MusicPlayer:
         self.tray = SystemTray(self)
         self.tray.start()
         self.root.after(500, self._init_taskbar)
-        self.hotkey_listener = GlobalHotkeyListener(self)
-        self.hotkey_listener.start()
+        if GlobalHotkeyListener is not None:
+            self.hotkey_listener = GlobalHotkeyListener(self)
+            self.hotkey_listener.start()
+        else:
+            self.hotkey_listener = None
 
         self.root.after(100, self._init_data)
         self.root.after(200, lambda: self.mode_btn.config(
@@ -771,8 +777,8 @@ class MusicPlayer:
     def _chat_event(self, event_type):
         """Send a system event (song_change/like/skip/add_playlist) to AI."""
         song = None
-        if self.songs and self.idx < len(self.songs):
-            song = self.songs[self.idx]
+        with self._candidates_lock:
+            song = self.songs[self.idx] if self.songs and self.idx < len(self.songs) else {}
 
         extra = self._load_chat_context()
 
@@ -785,13 +791,14 @@ class MusicPlayer:
                     history_snapshot,
                     history=extra["history"],
                     taste=extra["taste"],
-                    song_stats=extra["song_stats"])
+                    song_stats=extra["song_stats"],
+                    session_stats=extra.get("session_stats"))
                 if reply:
                     with self._chat_history_lock:
                         self._chat_history.append({"role": "user",
                             "content": f"[System event: {event_type}]"})
                         self._chat_history.append({"role": "assistant", "content": reply})
-                        self._chat_history = self._chat_history[-30:]
+                        self._chat_history = self._chat_history[-20:]
                     clean_reply, should_skip = self._check_ai_actions(reply)
                     self.root.after(0, lambda: self._chat_append("沧溟", clean_reply))
                     if should_skip:
@@ -804,7 +811,8 @@ class MusicPlayer:
         """Parse AI action tags from reply. Returns (clean_reply, should_skip)."""
         should_skip = False
         clean = reply
-        m = re.search(r'\s*\[切歌\]\s*$', clean)
+        # Match [切歌] at end, with optional trailing Chinese punctuation
+        m = re.search(r'\[切歌\][。，！？…\s]*$', clean)
         if m:
             # Don't auto-skip during song request — it would race with _handle_song_request
             if getattr(self, '_skip_in_progress', False) or getattr(self, '_song_request_in_flight', False):
@@ -846,7 +854,8 @@ class MusicPlayer:
             # Trigger rescore to apply mood boosts
             self._trigger_rescore()
 
-        song = self.songs[self.idx] if self.songs and self.idx < len(self.songs) else {}
+        with self._candidates_lock:
+            song = self.songs[self.idx] if self.songs and self.idx < len(self.songs) else {}
         extra = self._load_chat_context()
 
         def _r():
@@ -858,7 +867,8 @@ class MusicPlayer:
                     history_snapshot,
                     history=extra["history"],
                     taste=extra["taste"],
-                    song_stats=extra["song_stats"])
+                    song_stats=extra["song_stats"],
+                    session_stats=extra.get("session_stats"))
                 with self._chat_history_lock:
                     self._chat_history.append({"role": "user", "content": text})
                     self._chat_history.append({"role": "assistant", "content": reply})
@@ -981,7 +991,21 @@ class MusicPlayer:
         taste["_mode"] = self.mode
 
         song_stats = h.get("song_plays", {})
-        return {"history": h, "taste": taste, "song_stats": song_stats}
+        # Session-level aggregates for AI awareness
+        session_stats = {
+            "total_played": self.play_count,
+            "mode": self.mode,
+            "mood_radio_active": self._mood_radio.active,
+            "mood_radio_label": self._mood_radio.label if self._mood_radio.active else "",
+            "queue_remaining": len([s for s in self.songs[self.idx:]
+                                    if not s.get("_played", False)]) if self.songs else 0,
+        }
+        # Smart DJ observations (song arc + feedback stats)
+        dj_ctx = self._smart_dj.get_dj_context()
+        if dj_ctx and dj_ctx.get("recent_history"):
+            session_stats["dj_context"] = dj_ctx
+        return {"history": h, "taste": taste, "song_stats": song_stats,
+                "session_stats": session_stats}
 
     def _track_play(self, song, action=None):
         """Record per-song play event in history.json for AI context.
@@ -2135,22 +2159,25 @@ class MusicPlayer:
 
                 if artist_songs:
                     # Artist mode: songs are already top/hot — accept all
-                    self.root.after(0, lambda s=song, q=query:
-                        self._queue_and_play_song_request(s, q, play=(queued == 0)))
+                    is_first = (queued == 0)  # capture BEFORE incrementing
+                    self.root.after(0, lambda s=song, q=query, p=is_first:
+                        self._queue_and_play_song_request(s, q, play=p))
                     queued += 1
                     for a in song.get("singer", []):
                         boosted_artists.add(a.get("name", ""))
                 elif q_words:
                     hits = sum(1 for w in q_words if w in top_text)
                     if hits >= len(q_words) * 0.3:
-                        self.root.after(0, lambda s=song, q=query:
-                            self._queue_and_play_song_request(s, q, play=(queued == 0)))
+                        is_first = (queued == 0)
+                        self.root.after(0, lambda s=song, q=query, p=is_first:
+                            self._queue_and_play_song_request(s, q, play=p))
                         queued += 1
                         for a in song.get("singer", []):
                             boosted_artists.add(a.get("name", ""))
                 elif query.lower() in top_text:
-                    self.root.after(0, lambda s=song, q=query:
-                        self._queue_and_play_song_request(s, q, play=(queued == 0)))
+                    is_first = (queued == 0)
+                    self.root.after(0, lambda s=song, q=query, p=is_first:
+                        self._queue_and_play_song_request(s, q, play=p))
                     queued += 1
                     for a in song.get("singer", []):
                         boosted_artists.add(a.get("name", ""))

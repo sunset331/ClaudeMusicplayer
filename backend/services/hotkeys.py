@@ -5,6 +5,7 @@ Registers Ctrl+Alt and media key shortcuts for playback control.
 """
 
 import logging
+import sys
 
 log = logging.getLogger("claude-music")
 
@@ -12,14 +13,14 @@ log = logging.getLogger("claude-music")
 def run_hotkeys():
     try:
         from pynput.keyboard import GlobalHotKeys, Key
-    except ImportError:
-        log.warning("pynput not installed, global hotkeys disabled")
+    except ImportError as e:
+        log.warning("pynput not installed, global hotkeys disabled: %s", e)
+        print(f"[backend hotkeys] pynput not installed: {e}", file=sys.stderr)
         return
 
     def api_post(path):
         try:
             import requests as _r
-
             _r.post(f"http://localhost:8765{path}", timeout=1)
         except Exception:
             pass
@@ -46,16 +47,22 @@ def run_hotkeys():
         "<ctrl>+<alt>+l": on_like,
         "<ctrl>+<alt>+s": on_skip,
     }
-    # Media keys
-    try:
-        hotkey_map["<media_play_pause>"] = on_play_pause
-        hotkey_map["<media_next>"] = on_next
-        hotkey_map["<media_previous>"] = on_prev
-    except Exception:
-        pass
+    # Media keys — individually try each, log failures
+    for media_key, handler in [
+        ("<media_play_pause>", on_play_pause),
+        ("<media_next>", on_next),
+        ("<media_previous>", on_prev),
+    ]:
+        try:
+            hotkey_map[media_key] = handler
+            log.info("Registered media key: %s", media_key)
+        except Exception as e:
+            log.warning("Media key %s unavailable: %s", media_key, e)
 
     try:
+        log.info("Starting backend hotkey listener with %d bindings", len(hotkey_map))
         with GlobalHotKeys(hotkey_map) as h:
             h.join()
     except Exception as e:
-        log.warning("Global hotkeys failed: %s", e)
+        log.error("Global hotkeys failed: %s", e, exc_info=True)
+        print(f"[backend hotkeys] FATAL: {e}", file=sys.stderr)

@@ -134,7 +134,7 @@ load_cookie()
 class MusicPlayer:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Claude Music · 每日推荐")
+        self.root.title(f"{config.APP_NAME} · 每日推荐 v{config.VERSION}")
         self.root.geometry("1200x780")
         self.root.minsize(1000, 600)
         self.root.configure(bg=BG_MAIN)

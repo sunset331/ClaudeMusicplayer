@@ -1881,6 +1881,7 @@ class MusicPlayer:
                         if "=" in item:
                             k, v = item.strip().split("=", 1)
                             _session.cookies.set(k.strip(), v.strip())
+                    load_cookie()  # refresh _COOKIE_VALUE for URL query param
                     qw.after(0, qw.destroy)
                     self.root.after(500, self._check_login)
                     return
